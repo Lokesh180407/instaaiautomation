@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account — InstaAutomate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #07081A;
+      --bg2:     #0D0F28;
+      --card:    #111330;
+      --card2:   #161938;
+      --border:  rgba(255,255,255,0.07);
+      --purple:  #7C3AED;
+      --purple2: #A78BFA;
+      --pink:    #EC4899;
+      --cyan:    #22D3EE;
+      --green:   #10B981;
+      --amber:   #F59E0B;
+      --text:    #EEF2FF;
+      --muted:   #8892B0;
+      --r:       14px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── TOPBAR ─── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 60px;
+      background: rgba(7,8,26,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; }
+    .logo-icon {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .live-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+      color: var(--green); padding: 5px 12px; border-radius: 99px;
+      font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+
+    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; border: none; text-decoration: none; }
+    .btn-primary { background: linear-gradient(135deg, var(--purple), #6D28D9); color: white; box-shadow: 0 4px 16px rgba(124,58,237,0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.45); }
+    .btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+    /* ─── LAYOUT ─── */
+    .container { max-width: 1140px; margin: 0 auto; padding: 36px 24px 64px; }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative; overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 44px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; gap: 36px;
+    }
+    .hero::before {
+      content: ''; position: absolute;
+      top: -100px; right: -60px;
+      width: 400px; height: 400px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,.14) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: ''; position: absolute;
+      bottom: -60px; left: 30%;
+      width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(236,72,153,.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .avatar-ring {
+      position: relative; flex-shrink: 0;
+      padding: 3px; border-radius: 50%;
+      background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    }
+    .avatar-ring img, .avatar-ring .av-fallback {
+      width: 96px; height: 96px; border-radius: 50%;
+      display: block; object-fit: cover;
+      border: 3px solid var(--card);
+    }
+    .av-fallback {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 38px; font-weight: 800; color: white;
+    }
+    .online-dot {
+      position: absolute; bottom: 6px; right: 6px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--green); border: 3px solid var(--card);
+    }
+
+    .hero-info { flex: 1; z-index: 1; }
+    .hero-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+    .badge-purple { background: rgba(124,58,237,.15); border: 1px solid rgba(124,58,237,.3); color: var(--purple2); }
+    .badge-green  { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.3); color: var(--green); }
+    .badge-pink   { background: rgba(236,72,153,.12); border: 1px solid rgba(236,72,153,.3); color: var(--pink); }
+    .badge-amber  { background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.3); color: var(--amber); }
+
+    .hero-name { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 3px; }
+    .hero-handle { color: var(--muted); font-size: 15px; margin-bottom: 10px; }
+    .hero-bio { color: var(--muted); font-size: 14px; line-height: 1.65; max-width: 480px; margin-bottom: 20px; }
+
+    .hero-stats { display: flex; gap: 0; }
+    .hs { padding: 12px 24px; border-right: 1px solid var(--border); }
+    .hs:first-child { padding-left: 0; }
+    .hs:last-child { border-right: none; }
+    .hs-val { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, var(--purple2), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hs-lbl { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 1px; }
+
+    .hero-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 1; flex-shrink: 0; }
+    .account-id { font-family: monospace; font-size: 11px; color: var(--muted); background: rgba(0,0,0,.3); padding: 4px 10px; border-radius: 6px; }
+
+    /* ─── STATS GRID ─── */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    @media(max-width:900px){ .grid-4{ grid-template-columns: repeat(2,1fr); } }
+    @media(max-width:500px){ .grid-4{ grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 22px 24px; position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(0,0,0,.4); }
+    .stat-card .glow {
+      position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; border-radius: 50%;
+      opacity: 0.25; pointer-events: none;
+    }
+    .sc-icon { font-size: 22px; margin-bottom: 12px; }
+    .sc-lbl { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .sc-val { font-size: 30px; font-weight: 800; letter-spacing: -1px; }
+    .sc-sub { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+    /* ─── SECTION ─── */
+    .section { margin-bottom: 32px; }
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .section-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .section-title .ct { background: rgba(124,58,237,.2); color: var(--purple2); padding: 1px 9px; border-radius: 99px; font-size: 12px; font-weight: 700; }
+
+    /* ─── MEDIA GRID ─── */
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; }
+    .media-card {
+      aspect-ratio: 1; border-radius: 12px; overflow: hidden;
+      background: var(--card2); border: 1px solid var(--border);
+      position: relative; cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .media-card:hover { transform: scale(1.04); box-shadow: 0 16px 40px rgba(0,0,0,.6); z-index: 2; }
+    .media-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .media-card .placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:32px; background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(236,72,153,.15)); }
+    .media-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.85) 0%, transparent 50%);
+      opacity: 0; transition: opacity .18s;
+      display: flex; align-items: flex-end; padding: 10px;
+    }
+    .media-card:hover .media-overlay { opacity: 1; }
+    .media-stats-row { display: flex; gap: 10px; font-size: 12px; font-weight: 600; }
+    .media-type-chip {
+      position: absolute; top: 7px; right: 7px;
+      background: rgba(0,0,0,.65); backdrop-filter: blur(6px);
+      padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 700;
+    }
+    .media-empty { color: var(--muted); font-size: 14px; grid-column: 1/-1; text-align: center; padding: 40px; }
+
+    /* ─── CONVERSATIONS ─── */
+    .convo-list { display: flex; flex-direction: column; gap: 2px; }
+    .convo-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px; border-radius: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      cursor: pointer; transition: background .15s;
+    }
+    .convo-item:hover { background: var(--card2); }
+    .convo-av {
+      width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px;
+    }
+    .convo-body { flex: 1; min-width: 0; }
+    .convo-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+    .convo-preview { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .convo-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+    .convo-unread { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); flex-shrink: 0; }
+
+    /* ─── TOKEN INFO ─── */
+    .token-bar {
+      display: flex; align-items: center; gap: 16px;
+      background: rgba(124,58,237,.08); border: 1px solid rgba(124,58,237,.2);
+      border-radius: var(--r); padding: 16px 20px; margin-bottom: 28px;
+    }
+    .token-bar .tk-icon { font-size: 22px; flex-shrink: 0; }
+    .token-bar .tk-info { flex: 1; }
+    .token-bar .tk-info h5 { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+    .token-bar .tk-info p { font-size: 12px; color: var(--muted); }
+    .token-bar .tk-val { font-family: monospace; font-size: 11px; color: var(--purple2); background: rgba(0,0,0,.3); padding: 5px 12px; border-radius: 8px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ─── LOADER / ERROR ─── */
+    .loader-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 280px; gap: 18px; }
+    .spinner { width: 44px; height: 44px; border: 3px solid rgba(124,58,237,.18); border-top-color: var(--purple); border-radius: 50%; animation: spin .75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-lbl { color: var(--muted); font-size: 13px; }
+
+    .err-box { background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.2); border-radius: var(--r); padding: 36px; text-align: center; }
+    .err-box .err-icon { font-size: 44px; margin-bottom: 12px; }
+    .err-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .err-box p { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+    .err-box code { background: rgba(0,0,0,.3); padding: 2px 8px; border-radius: 5px; font-size: 12px; color: #FCA5A5; }
+
+    /* ─── TAB NAV ─── */
+    .tabs { display: flex; gap: 4px; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 24px; width: fit-content; }
+    .tab { padding: 8px 20px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); border: none; background: none; transition: all .15s; }
+    .tab.active { background: var(--card); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ─── GRID 2 ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width:720px){ .grid-2{ grid-template-columns: 1fr; } }
+
+    .info-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 22px 24px; }
+    .info-card h4 { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .ik { color: var(--muted); }
+    .info-row .iv { font-weight: 600; font-family: monospace; font-size: 12px; color: var(--purple2); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .info-row .iv.plain { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    InstaAutomate
+  </div>
+  <div class="topbar-right">
+    <div class="live-pill"><div class="live-dot"></div>Live API</div>
+    <button class="btn btn-ghost" onclick="loadAccount()">↻ Refresh</button>
+    <a href="dashboard.html" class="btn btn-primary">Dashboard →</a>
+  </div>
+</header>
+
+<!-- PAGE -->
+<main class="container">
+
+  <!-- LOADER -->
+  <div id="stateLoader" class="loader-wrap">
+    <div class="spinner"></div>
+    <div class="loader-lbl">Connecting to Instagram Graph API…</div>
+  </div>
+
+  <!-- ERROR -->
+  <div id="stateError" style="display:none">
+    <div class="err-box">
+      <div class="err-icon">⚠️</div>
+      <h3>Could not load your account</h3>
+      <p id="errMsg" style="margin-bottom:10px;"></p>
+      <p>Make sure your <strong>Access Token</strong> is still valid and your account is a <strong>Professional</strong> account linked to a Facebook Page.</p>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="stateContent" style="display:none">
+
+    <!-- TOKEN BAR -->
+    <div class="token-bar">
+      <div class="tk-icon">🔑</div>
+      <div class="tk-info">
+        <h5>Connected via Facebook Page Access Token</h5>
+        <p>Uses Meta Graph API v23.0 · Direct integration · No OAuth required</p>
+      </div>
+      <div class="tk-val" id="tkPreview"></div>
+    </div>
+
+    <!-- PROFILE HERO -->
+    <div class="hero">
+      <div class="avatar-ring">
+        <div id="avatarEl"></div>
+        <div class="online-dot"></div>
+      </div>
+
+      <div class="hero-info">
+        <div class="hero-eyebrow">
+          <span class="badge badge-green">● Connected</span>
+          <span class="badge badge-purple" id="hBadgeType">Business</span>
+          <span class="badge badge-amber">✦ Pro</span>
+        </div>
+        <div class="hero-name" id="hName">—</div>
+        <div class="hero-handle" id="hHandle">@—</div>
+        <div class="hero-bio" id="hBio"></div>
+        <div class="hero-stats">
+          <div class="hs"><div class="hs-val" id="hFollowers">—</div><div class="hs-lbl">Followers</div></div>
+          <div class="hs"><div class="hs-val" id="hFollowing">—</div><div class="hs-lbl">Following</div></div>
+          <div class="hs"><div class="hs-val" id="hMedia">—</div><div class="hs-lbl">Posts</div></div>
+        </div>
+      </div>
+
+      <div class="hero-side">
+        <span class="account-id" id="hAccId">ID: —</span>
+        <a id="hWebsite" href="#" target="_blank" class="btn btn-ghost" style="display:none">🌐 Website</a>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="grid-4">
+      <div class="stat-card">
+        <div class="glow" style="background:radial-gradient(circle, var(--purple), transparent)"></div>
+        <div class="sc-icon">👥</div>
+        <div class="sc-lbl">Followers</div>
+        <div class="sc-val" id="sc1">—</div>
+        <div class="sc-sub">Your audience</div>
+      </div>
+      <div class="stat-card">
+        <div class="glow" style="background:radial-gradient(circle, var(--green), transparent)"></div>
+        <div class="sc-icon">📸</div>
+        <div class="sc-lbl">Total Posts</div>
+        <div class="sc-val" id="sc2">—</div>
+        <div class="sc-sub">Photos & Reels</div>
+      </div>
+      <div class="stat-card">
+        <div class="glow" style="background:radial-gradient(circle, var(--pink), transparent)"></div>
+        <div class="sc-icon">👤</div>
+        <div class="sc-lbl">Following</div>
+        <div class="sc-val" id="sc3">—</div>
+        <div class="sc-sub">Accounts you follow</div>
+      </div>
+      <div class="stat-card">
+        <div class="glow" style="background:radial-gradient(circle, var(--cyan), transparent)"></div>
+        <div class="sc-icon">🔗</div>
+        <div class="sc-lbl">Account Type</div>
+        <div class="sc-val" style="font-size:16px;letter-spacing:0" id="sc4">—</div>
+        <div class="sc-sub">Instagram account type</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('posts')">📸 Posts & Reels</button>
+      <button class="tab" onclick="switchTab('dm')">⚡ Direct DM Tester</button>
+      <button class="tab" onclick="switchTab('info')">🔐 Account Info</button>
+    </div>
+
+    <!-- TAB: POSTS -->
+    <div class="tab-panel active" id="tab-posts">
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">
+            Recent Posts & Reels
+            <span class="ct" id="mediaCountBadge">0</span>
+          </div>
+        </div>
+        <div class="media-grid" id="mediaGrid">
+          <div class="media-empty">
+            <div class="spinner" style="margin:0 auto 12px"></div>
+            Loading posts…
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DM -->
+    <div class="tab-panel" id="tab-dm">
+      <div class="grid-2">
+        <div class="info-card">
+          <h4>Direct DM Tester</h4>
+          <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.5;">
+            Test sending a direct message via the Instagram Graph API. Note: Due to Meta policies, you can only send DMs to users who have previously messaged your account.
+          </p>
+          <form id="dmTestForm" onsubmit="sendTestDM(event)">
+            <div style="margin-bottom: 14px;">
+              <label style="display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;">Recipient Instagram Scoped ID (SID)</label>
+              <input type="text" id="dmRecipientId" placeholder="e.g., 729384918237482" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-family: monospace; font-size: 13px; outline: none;">
+            </div>
+            <div style="margin-bottom: 18px;">
+              <label style="display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;">Message Text</label>
+              <textarea id="dmMessageText" placeholder="Type a test message here..." required rows="4" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 13px; outline: none; resize: vertical;"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">🚀 Send Message</button>
+          </form>
+        </div>
+        <div class="info-card">
+          <h4>API Response Details</h4>
+          <div id="dmResponseBox" style="background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 10px; padding: 18px; font-family: monospace; font-size: 12px; min-height: 200px; max-height: 260px; overflow-y: auto; color: var(--muted); white-space: pre-wrap;">
+            API responses will be shown here...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: INFO -->
+    <div class="tab-panel" id="tab-info">
+      <div class="grid-2">
+        <div class="info-card">
+          <h4>Account Details</h4>
+          <div class="info-row"><span class="ik">Instagram User ID</span><span class="iv" id="i-uid">—</span></div>
+          <div class="info-row"><span class="ik">Username</span><span class="iv plain" id="i-uname">—</span></div>
+          <div class="info-row"><span class="ik">Full Name</span><span class="iv plain" id="i-name">—</span></div>
+          <div class="info-row"><span class="ik">Account Type</span><span class="iv plain" id="i-type">—</span></div>
+          <div class="info-row"><span class="ik">Followers</span><span class="iv plain" id="i-followers">—</span></div>
+          <div class="info-row"><span class="ik">Following</span><span class="iv plain" id="i-following">—</span></div>
+          <div class="info-row"><span class="ik">Total Posts</span><span class="iv plain" id="i-media">—</span></div>
+        </div>
+        <div class="info-card">
+          <h4>API Credentials</h4>
+          <div class="info-row"><span class="ik">App ID</span><span class="iv">1503208814932037</span></div>
+          <div class="info-row"><span class="ik">IG Account ID</span><span class="iv">1286299316995794</span></div>
+          <div class="info-row"><span class="ik">API Version</span><span class="iv plain">v23.0</span></div>
+          <div class="info-row"><span class="ik">Token Type</span><span class="iv plain">Page Access Token</span></div>
+          <div class="info-row"><span class="ik">Token (first 24)</span><span class="iv" id="i-token">—</span></div>
+          <div class="info-row"><span class="ik">Status</span><span class="iv plain" style="color:var(--green)">✓ Active</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  // ─── CREDENTIALS ───────────────────────────────────────────────
+  const IG_ID    = APP_CONFIG.instagramUserId || '';
+  const TOKEN    = APP_CONFIG.instagramToken || '';
+  const API      = `https://graph.facebook.com/${APP_CONFIG.graphVersion}`;
+  // ───────────────────────────────────────────────────────────────
+
+  function fmt(n) {
+    if (n == null) return '—';
+    if (n >= 1_000_000) return (n/1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000)     return (n/1_000).toFixed(1) + 'K';
+    return Number(n).toLocaleString();
+  }
+
+  function setState(s) {
+    document.getElementById('stateLoader').style.display  = s === 'loading' ? 'flex'  : 'none';
+    document.getElementById('stateError').style.display   = s === 'error'   ? 'block' : 'none';
+    document.getElementById('stateContent').style.display = s === 'ok'      ? 'block' : 'none';
+  }
+
+  async function apiFetch(path, fields) {
+    const url = `${API}/${path}?fields=${fields}&access_token=${TOKEN}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.error) throw new Error(`${d.error.message} (code ${d.error.code})`);
+    return d;
+  }
+
+  function switchTab(name) {
+    const tabs = ['posts', 'dm', 'info'];
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  }
+
+  async function sendTestDM(event) {
+    event.preventDefault();
+    const recipientId = document.getElementById('dmRecipientId').value.trim();
+    const text = document.getElementById('dmMessageText').value.trim();
+    const responseBox = document.getElementById('dmResponseBox');
+
+    responseBox.textContent = 'Sending message to Meta Graph API...';
+    responseBox.style.color = 'var(--muted)';
+
+    try {
+      const url = `${API}/me/messages?access_token=${TOKEN}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: { id: recipientId },
+          message: { text: text }
+        })
+      });
+
+      const data = await res.json();
+      responseBox.textContent = JSON.stringify(data, null, 2);
+
+      if (data.error) {
+        responseBox.style.color = '#FCA5A5';
+      } else {
+        responseBox.style.color = 'var(--green)';
+      }
+    } catch (err) {
+      responseBox.textContent = `Network error: ${err.message}`;
+      responseBox.style.color = '#FCA5A5';
+    }
+  }
+
+  async function loadAccount() {
+    setState('loading');
+    try {
+
+      // ── 1. Profile ──────────────────────────────────────────────
+      const p = await apiFetch(IG_ID,
+        'id,username,name,biography,profile_picture_url,followers_count,follows_count,media_count,account_type,website'
+      );
+
+      // Token bar
+      document.getElementById('tkPreview').textContent = TOKEN.substring(0, 28) + '…';
+
+      // Hero
+      const avatarEl = document.getElementById('avatarEl');
+      if (p.profile_picture_url) {
+        avatarEl.innerHTML = `<img src="${p.profile_picture_url}" alt="${p.username}"
+          onerror="this.outerHTML='<div class=\\'av-fallback\\'>${(p.username||'U')[0].toUpperCase()}</div>'" />`;
+      } else {
+        avatarEl.innerHTML = `<div class="av-fallback">${(p.username||'U')[0].toUpperCase()}</div>`;
+      }
+
+      document.getElementById('hName').textContent      = p.name || p.username || '—';
+      document.getElementById('hHandle').textContent    = '@' + (p.username || '—');
+      document.getElementById('hBio').textContent       = p.biography || '';
+      document.getElementById('hBadgeType').textContent = p.account_type || 'Business';
+      document.getElementById('hFollowers').textContent = fmt(p.followers_count);
+      document.getElementById('hFollowing').textContent = fmt(p.follows_count);
+      document.getElementById('hMedia').textContent     = fmt(p.media_count);
+      document.getElementById('hAccId').textContent     = 'ID: ' + p.id;
+
+      if (p.website) {
+        const wb = document.getElementById('hWebsite');
+        wb.href = p.website; wb.style.display = 'flex';
+      }
+
+      // Stat cards
+      document.getElementById('sc1').textContent = fmt(p.followers_count);
+      document.getElementById('sc2').textContent = fmt(p.media_count);
+      document.getElementById('sc3').textContent = fmt(p.follows_count);
+      document.getElementById('sc4').textContent = p.account_type || 'Business';
+
+      // Info tab
+      document.getElementById('i-uid').textContent      = p.id;
+      document.getElementById('i-uname').textContent    = '@' + (p.username||'—');
+      document.getElementById('i-name').textContent     = p.name || '—';
+      document.getElementById('i-type').textContent     = p.account_type || '—';
+      document.getElementById('i-followers').textContent = fmt(p.followers_count);
+      document.getElementById('i-following').textContent = fmt(p.follows_count);
+      document.getElementById('i-media').textContent    = fmt(p.media_count);
+      document.getElementById('i-token').textContent    = TOKEN.substring(0,24) + '…';
+
+      setState('ok');
+
+      // ── 2. Media ────────────────────────────────────────────────
+      try {
+        const media = await apiFetch(`${IG_ID}/media`,
+          'id,media_type,media_url,thumbnail_url,permalink,like_count,comments_count,caption,timestamp'
+        );
+        renderMedia(media.data || []);
+      } catch(e) {
+        document.getElementById('mediaGrid').innerHTML =
+          `<div class="media-empty">⚠️ Could not load media: ${e.message}</div>`;
+      }
+
+    } catch(e) {
+      document.getElementById('errMsg').textContent = e.message;
+      setState('error');
+    }
+  }
+
+  function renderMedia(items) {
+    document.getElementById('mediaCountBadge').textContent = items.length;
+    const grid = document.getElementById('mediaGrid');
+
+    if (!items.length) {
+      grid.innerHTML = '<div class="media-empty">No posts found for this account.</div>';
+      return;
+    }
+
+    grid.innerHTML = items.map(item => {
+      const isVideo    = item.media_type === 'VIDEO';
+      const isCarousel = item.media_type === 'CAROUSEL_ALBUM';
+      const thumb      = item.thumbnail_url || item.media_url;
+      const typeLabel  = isVideo ? '▶ Reel' : isCarousel ? '⊞ Album' : '🖼 Photo';
+
+      const imgPart = thumb
+        ? `<img src="${thumb}" alt="post" loading="lazy"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+           <div class="placeholder" style="display:none">📸</div>`
+        : `<div class="placeholder">📸</div>`;
+
+      return `
+        <div class="media-card" onclick="window.open('${item.permalink}','_blank')" title="${(item.caption||'').substring(0,80)}">
+          ${imgPart}
+          <div class="media-type-chip">${typeLabel}</div>
+          <div class="media-overlay">
+            <div class="media-stats-row">
+              <span>❤️ ${fmt(item.like_count)}</span>
+              <span>💬 ${fmt(item.comments_count)}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Load on page open
+  loadAccount();
+</script>
+</body>
+</html>

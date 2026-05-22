@@ -1,0 +1,17 @@
+{
+  "name": "instaautomate",
+  "version": "1.0.0",
+  "description": "Instagram automation web app",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve -l 8000 .",
+    "start": "npm run dev",
+    "tunnel": "node scripts/start-ngrok.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "ngrok": "^5.0.0-beta.2",
+    "serve": "^14.2.0"
+  }
+}

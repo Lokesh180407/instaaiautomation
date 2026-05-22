@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Auth - InstaAutomate</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Supabase Auth Test</h1>
+  <div id="status">Initializing...</div>
+  <div id="results"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://ssuqvxfgraphgcnybxcj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzdXF2eGZncmFwaGdjbnlieGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTM1NjEsImV4cCI6MjA5NDc2OTU2MX0.90N1IDt5QUffn2BVixbpCot-fsuvEHsPpusa-ecACOo';
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+
+    function log(message) {
+      const p = document.createElement('p');
+      p.textContent = message;
+      resultsEl.appendChild(p);
+    }
+
+    async function testConnection() {
+      try {
+        statusEl.textContent = 'Testing connection...';
+        log('Testing Supabase connection...');
+        
+        // Test 1: Check session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        log(`Session check: ${sessionError ? 'ERROR: ' + sessionError.message : 'OK'}`);
+        
+        // Test 2: Try to sign in with admin credentials
+        log('Attempting sign in with admin@loki...');
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: 'admin@loki',
+          password: '123'
+        });
+        
+        log(`Admin sign in result: ${signInError ? 'ERROR: ' + signInError.message : 'SUCCESS'}`);
+        log(`Session created: ${signInData.session ? 'YES' : 'NO'}`);
+        log(`User ID: ${signInData.user ? signInData.user.id : 'N/A'}`);
+        
+        if (signInData.session) {
+          // Test 3: Clean up
+          await supabase.auth.signOut();
+          log('Signed out (cleanup)');
+        }
+        
+        // Test 5: Try Google OAuth
+        log('Testing Google OAuth...');
+        const { data: googleData, error: googleError } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/dashboard.html`,
+            skipBrowserRedirect: true
+          }
+        });
+        
+        log(`Google OAuth result: ${googleError ? 'ERROR: ' + googleError.message : 'SUCCESS (URL: ' + (googleData.url ? 'YES' : 'NO') + ')'}`);
+        
+        statusEl.textContent = 'Test complete';
+        statusEl.style.color = 'green';
+        
+      } catch (error) {
+        log(`FATAL ERROR: ${error.message}`);
+        statusEl.textContent = 'Test failed';
+        statusEl.style.color = 'red';
+      }
+    }
+
+    testConnection();
+  </script>
+</body>
+</html>

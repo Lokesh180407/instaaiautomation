@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — InstaFlow Admin</title>
+  <script src="../js/config.js"></script>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">InstaFlow <span>Admin</span></div>
+      <nav>
+        <a href="dashboard.html">Overview</a>
+        <a href="users.html">Users</a>
+        <a href="accounts.html">Admin Accounts</a>
+        <a class="active" href="settings.html">Settings</a>
+      </nav>
+      <button type="button" class="logout" id="logoutBtn">Logout</button>
+    </aside>
+    <main class="main">
+      <h1>Platform Settings</h1>
+      <section class="panel">
+        <p class="empty">Maintenance mode, signups, and plan limits — configure after admin-api deployment.</p>
+      </section>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script>requireAdminAuth();</script>
+</body>
+</html>

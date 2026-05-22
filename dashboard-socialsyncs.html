@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialSyncs Dashboard</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/socialsyncs-dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>SocialSyncs</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-section="overview">
+          <span>📊</span> Overview
+        </a>
+        <a href="#" class="nav-item" data-section="create">
+          <span>✨</span> Create Post
+        </a>
+        <a href="#" class="nav-item" data-section="history">
+          <span>📝</span> Post History
+        </a>
+        <a href="#" class="nav-item" data-section="gallery">
+          <span>🖼️</span> Media Gallery
+        </a>
+        <a href="#" class="nav-item" data-section="youtube">
+          <span>▶️</span> YouTube
+        </a>
+        <a href="#" class="nav-item" data-section="settings">
+          <span>⚙️</span> Settings
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="user-info" class="user-info"></div>
+        <button id="logout-btn" class="btn-secondary">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Overview Section -->
+      <section id="section-overview" class="content-section active">
+        <h1>Dashboard Overview</h1>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📤</div>
+            <div class="stat-info">
+              <h3 id="total-posts">0</h3>
+              <p>Total Posts</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <h3 id="published-posts">0</h3>
+              <p>Published</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+              <h3 id="pending-posts">0</h3>
+              <p>Pending</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🖼️</div>
+            <div class="stat-info">
+              <h3 id="total-media">0</h3>
+              <p>Media Files</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="recent-section">
+          <h2>Recent Posts</h2>
+          <div id="recent-posts" class="posts-list"></div>
+        </div>
+      </section>
+
+      <!-- Create Post Section -->
+      <section id="section-create" class="content-section">
+        <h1>Create Post</h1>
+        <div class="create-post-container">
+          <form id="create-post-form">
+            <div class="form-group">
+              <label>Platform</label>
+              <select id="post-platform" required>
+                <option value="">Select Platform</option>
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook (Coming Soon)</option>
+                <option value="youtube">YouTube (Coming Soon)</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label>Post Type</label>
+              <select id="post-type" required>
+                <option value="">Select Type</option>
+                <option value="image">Image</option>
+                <option value="carousel">Carousel</option>
+                <option value="reel">Reel</option>
+                <option value="story_image">Story Image</option>
+                <option value="story_video">Story Video</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Media</label>
+              <div id="media-input-container">
+                <input type="file" id="media-input" accept="image/*,video/*" multiple />
+                <div id="media-preview" class="media-preview"></div>
+              </div>
+              <button type="button" id="select-from-gallery" class="btn-secondary">Select from Gallery</button>
+            </div>
+
+            <div class="form-group">
+              <label>Caption</label>
+              <textarea id="post-caption" rows="4" placeholder="Write your caption..."></textarea>
+            </div>
+
+            <div class="form-group" id="cover-url-group" style="display: none;">
+              <label>Cover Image URL (for Reels)</label>
+              <input type="url" id="cover-url" placeholder="https://..." />
+            </div>
+
+            <div class="form-group" id="audio-name-group" style="display: none;">
+              <label>Audio Name (for Reels)</label>
+              <input type="text" id="audio-name" placeholder="Audio track name" />
+            </div>
+
+            <button type="submit" class="btn-primary">Create Post</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Post History Section -->
+      <section id="section-history" class="content-section">
+        <h1>Post History</h1>
+        <div class="filters">
+          <select id="filter-platform">
+            <option value="">All Platforms</option>
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="youtube">YouTube</option>
+          </select>
+          <select id="filter-status">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="finished">Finished</option>
+            <option value="published">Published</option>
+            <option value="error">Error</option>
+          </select>
+        </div>
+        <div id="posts-history" class="posts-list"></div>
+      </section>
+
+      <!-- Media Gallery Section -->
+      <section id="section-gallery" class="content-section">
+        <h1>Media Gallery</h1>
+        <div class="gallery-controls">
+          <input type="file" id="upload-media" accept="image/*,video/*" multiple />
+          <button id="upload-btn" class="btn-primary">Upload Media</button>
+        </div>
+        <div id="media-gallery" class="media-gallery"></div>
+      </section>
+
+      <!-- YouTube Section -->
+      <section id="section-youtube" class="content-section">
+        <h1>YouTube Automation</h1>
+        <div class="youtube-section">
+          <div class="youtube-add">
+            <h2>Add Video</h2>
+            <form id="add-video-form">
+              <input type="text" id="youtube-video-id" placeholder="YouTube Video ID" required />
+              <button type="submit" class="btn-primary">Add Video</button>
+            </form>
+          </div>
+          <div id="youtube-videos" class="youtube-videos-list"></div>
+        </div>
+      </section>
+
+      <!-- Settings Section -->
+      <section id="section-settings" class="content-section">
+        <h1>Settings</h1>
+        
+        <div class="settings-section">
+          <h2>Profile</h2>
+          <form id="profile-form">
+            <div class="form-group">
+              <label>Display Name</label>
+              <input type="text" id="display-name" placeholder="Your name" />
+            </div>
+            <div class="form-group">
+              <label>Avatar URL</label>
+              <input type="url" id="avatar-url" placeholder="https://..." />
+            </div>
+            <button type="submit" class="btn-primary">Save Profile</button>
+          </form>
+        </div>
+
+        <div class="settings-section">
+          <h2>Instagram Credentials</h2>
+          <form id="instagram-credentials-form">
+            <div class="form-group">
+              <label>Instagram Business Account ID</label>
+              <input type="text" id="ig-business-id" placeholder="Your Instagram Business ID" required />
+            </div>
+            <div class="form-group">
+              <label>Facebook Page ID</label>
+              <input type="text" id="fb-page-id" placeholder="Your Facebook Page ID" required />
+            </div>
+            <div class="form-group">
+              <label>Page Access Token</label>
+              <input type="text" id="page-token" placeholder="Your long-lived access token" required />
+            </div>
+            <button type="submit" class="btn-primary">Save Credentials</button>
+            <button type="button" id="clear-instagram-credentials" class="btn-danger">Clear Credentials</button>
+          </form>
+        </div>
+
+        <div class="settings-section">
+          <h2>API Keys</h2>
+          <form id="api-key-form">
+            <div class="form-group">
+              <label>API Key Name</label>
+              <input type="text" id="api-key-name" placeholder="My App" required />
+            </div>
+            <button type="submit" class="btn-primary">Generate API Key</button>
+          </form>
+          <div id="api-keys-list" class="api-keys-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Gallery Modal -->
+  <div id="gallery-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Select Media from Gallery</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div id="modal-gallery" class="modal-gallery"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/socialsyncs.js"></script>
+  <script src="js/dashboard-socialsyncs.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connecting Instagram...</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0A0F1E; color: #F9FAFB; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .box { text-align: center; padding: 32px; max-width: 360px; }
+    .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #7C3AED; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .steps { text-align: left; font-size: 13px; color: #9CA3AF; margin-top: 16px; }
+    .steps li { margin: 6px 0; }
+    .steps li.done { color: #10B981; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="spinner"></div>
+    <p id="status">Connecting your Instagram…</p>
+    <ol class="steps" id="steps">
+      <li id="s1">Verifying with Meta</li>
+      <li id="s2">Getting access token</li>
+      <li id="s3">Finding your Page & Instagram</li>
+      <li id="s4">Subscribing webhooks</li>
+      <li id="s5">Saving to your account</li>
+    </ol>
+  </div>
+  <script src="baseUrl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+    const error = params.get('error') || params.get('error_reason');
+
+    function stepDone(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('done');
+    }
+
+    function notifyParent(payload) {
+      if (window.opener) {
+        window.opener.postMessage(payload, window.location.origin);
+        setTimeout(() => window.close(), 400);
+      } else {
+        window.location.href = payload.type === 'IG_CONNECTED'
+          ? 'dashboard.html?connected=true'
+          : `connect.html?error=${encodeURIComponent(payload.error || 'oauth_failed')}`;
+      }
+    }
+
+    async function handleCallback() {
+      const status = document.getElementById('status');
+
+      if (error) {
+        status.textContent = 'Connection cancelled.';
+        notifyParent({ type: 'IG_ERROR', error });
+        return;
+      }
+      if (!code) {
+        notifyParent({ type: 'IG_ERROR', error: 'No authorization code received' });
+        return;
+      }
+
+      const stored = JSON.parse(localStorage.getItem('ig_oauth_pending') || 'null');
+      if (!stored || stored.state !== state) {
+        notifyParent({ type: 'IG_ERROR', error: 'Invalid OAuth state. Please try again.' });
+        return;
+      }
+
+      stepDone('s1');
+      status.textContent = 'Exchanging token & setting up webhooks…';
+
+      try {
+        const supabase = window.supabase.createClient(APP_CONFIG.supabaseUrl, APP_CONFIG.supabaseAnonKey);
+        const { data: session } = await supabase.auth.getSession();
+        stepDone('s2');
+
+        const { data, error: fnError } = await supabase.functions.invoke('instagram-oauth', {
+          body: {
+            code,
+            redirect_uri: APP_CONFIG.redirectUri,
+            user_id: session?.session?.user?.id
+          },
+          headers: session?.session?.access_token
+            ? { Authorization: `Bearer ${session.session.access_token}` }
+            : {}
+        });
+
+        if (fnError) throw fnError;
+        if (data?.error) throw new Error(data.error);
+
+        stepDone('s3');
+        stepDone('s4');
+        localStorage.removeItem('ig_oauth_pending');
+
+        if (session?.session?.user) {
+          stepDone('s5');
+          const userId = session.session.user.id;
+          const accountRow = {
+            user_id: userId,
+            instagram_user_id: String(data.instagram_user_id),
+            username: data.username || 'instagram_user',
+            name: data.name,
+            access_token: data.access_token,
+            page_id: data.page_id,
+            page_access_token: data.page_access_token,
+            page_name: data.page_name,
+            token_expires_at: data.token_expires_at,
+            webhook_subscribed: data.webhook_subscribed,
+            connection_method: 'meta_oauth',
+            profile_picture_url: data.profile_picture_url || '',
+            followers_count: data.followers_count || 0,
+            is_active: true,
+            connected_at: new Date().toISOString()
+          };
+          const { data: existing } = await supabase.from('instagram_accounts').select('id').eq('user_id', userId).maybeSingle();
+          if (existing?.id) {
+            await supabase.from('instagram_accounts').update(accountRow).eq('id', existing.id);
+          } else {
+            await supabase.from('instagram_accounts').insert(accountRow);
+          }
+          await supabase.from('instagram_config').upsert({
+            id: APP_CONFIG.configRowId,
+            instagram_account_id: data.instagram_user_id,
+            meta_app_id: APP_CONFIG.defaultAppId,
+            long_lived_token: data.access_token,
+            page_id: data.page_id,
+            page_access_token: data.page_access_token,
+            username: data.username,
+            connected: true
+          }, { onConflict: 'id' }).catch(() => {});
+        }
+
+        status.textContent = data.webhook_subscribed
+          ? 'Connected! Webhooks active. Bot is live.'
+          : 'Connected! (Enable app webhook in Meta if DMs do not arrive)';
+
+        notifyParent({ type: 'IG_CONNECTED', account: data });
+      } catch (err) {
+        status.textContent = err.message || 'Connection failed';
+        notifyParent({ type: 'IG_ERROR', error: err.message || 'Connection failed' });
+      }
+    }
+
+    handleCallback();
+  </script>
+</body>
+</html>

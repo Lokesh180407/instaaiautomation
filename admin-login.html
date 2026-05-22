@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Portal — InstaFlow Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="baseUrl.js"></script>
+  <script src="js/config.js"></script>
+  <style>
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #0F172A;
+      --muted: #64748B;
+      --accent: #4F46E5;
+      --accent-hover: #4338CA;
+      --danger: #DC2626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, sans-serif;
+      background: linear-gradient(160deg, #EEF2FF 0%, #F8FAFC 50%, #F1F5F9 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--text);
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: #EEF2FF;
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    p.sub { margin: 0 0 24px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+    input:focus { outline: 2px solid #C7D2FE; border-color: var(--accent); }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:hover { background: var(--accent-hover); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #FEF2F2;
+      color: var(--danger);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .error.show { display: block; }
+    .back { display: block; text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
+    .back a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">Admin Portal</span>
+    <h1>InstaFlow Pro</h1>
+    <p class="sub">Sign in with your admin account ID and password. This portal is separate from customer login.</p>
+
+    <form id="adminLoginForm">
+      <label for="accountId">Account ID</label>
+      <input id="accountId" name="accountId" type="text" placeholder="ADM-2026-001" autocomplete="username" required />
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" placeholder="••••••••••••" autocomplete="current-password" required />
+
+      <button type="submit" id="submitBtn">Sign in to Admin</button>
+      <div id="errorBox" class="error" role="alert"></div>
+    </form>
+
+    <p class="back"><a href="auth.html">← Customer login</a></p>
+  </div>
+
+  <script>
+    const ADMIN_API = `${window.APP_CONFIG?.supabaseUrl || ''}/functions/v1/admin-api`;
+
+    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const err = document.getElementById('errorBox');
+      err.classList.remove('show');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${ADMIN_API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            account_id: document.getElementById('accountId').value.trim(),
+            password: document.getElementById('password').value
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+
+        localStorage.setItem('admin_token', data.token);
+        localStorage.setItem('admin_data', JSON.stringify(data.admin));
+        window.location.href = 'admin/dashboard.html';
+      } catch (ex) {
+        err.textContent = ex.message || 'Could not sign in';
+        err.classList.add('show');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    if (localStorage.getItem('admin_token')) {
+      window.location.href = 'admin/dashboard.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+-- Dummy migration to align local history with remote
+-- No schema changes; needed for supabase db push consistency.

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Accounts — InstaFlow</title>
+  <script src="../js/config.js"></script>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">InstaFlow <span>Admin</span></div>
+      <nav>
+        <a href="dashboard.html">Overview</a>
+        <a href="users.html">Users</a>
+        <a class="active" href="accounts.html">Admin Accounts</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+      <button type="button" class="logout" id="logoutBtn">Logout</button>
+    </aside>
+    <main class="main">
+      <h1>Admin Accounts</h1>
+      <p class="sub">Generate accounts via Supabase after deploying <code>admin-api</code>. Seed: <code>supabase/scripts/seed_first_admin.sql</code></p>
+      <section class="panel">
+        <p id="accountsList" class="empty">Deploy admin-api edge function to list accounts.</p>
+      </section>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script>requireAdminAuth();</script>
+</body>
+</html>

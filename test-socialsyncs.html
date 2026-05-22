@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialSyncs Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-item {
+      background: white;
+      padding: 16px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border-left: 4px solid #ddd;
+    }
+    .test-item.pass {
+      border-left-color: #10B981;
+    }
+    .test-item.fail {
+      border-left-color: #EF4444;
+    }
+    .test-item h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+    }
+    .test-item p {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+    .success {
+      color: #10B981;
+      font-weight: bold;
+    }
+    .error {
+      color: #EF4444;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>SocialSyncs Setup Test</h1>
+  <div id="test-results"></div>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/socialsyncs.js"></script>
+  
+  <script>
+    const results = document.getElementById('test-results');
+    
+    function addTest(name, passed, message) {
+      const div = document.createElement('div');
+      div.className = `test-item ${passed ? 'pass' : 'fail'}`;
+      div.innerHTML = `
+        <h3>${name}</h3>
+        <p>${message}</p>
+      `;
+      results.appendChild(div);
+    }
+
+    // Test 1: Config loaded
+    try {
+      if (typeof APP_CONFIG !== 'undefined') {
+        addTest('Config File', true, 'APP_CONFIG is defined');
+      } else {
+        addTest('Config File', false, 'APP_CONFIG is not defined');
+      }
+    } catch (e) {
+      addTest('Config File', false, e.message);
+    }
+
+    // Test 2: Supabase loaded
+    try {
+      if (typeof window.supabase !== 'undefined') {
+        addTest('Supabase Library', true, 'Supabase is available');
+      } else {
+        addTest('Supabase Library', false, 'Supabase is not available');
+      }
+    } catch (e) {
+      addTest('Supabase Library', false, e.message);
+    }
+
+    // Test 3: Supabase client initialized
+    try {
+      if (typeof window.supabaseClient !== 'undefined' || typeof window.supabase !== 'undefined') {
+        addTest('Supabase Client', true, 'Supabase client is initialized');
+      } else {
+        addTest('Supabase Client', false, 'Supabase client is not initialized');
+      }
+    } catch (e) {
+      addTest('Supabase Client', false, e.message);
+    }
+
+    // Test 4: SocialSyncs client loaded
+    try {
+      if (typeof SocialSyncsClient !== 'undefined') {
+        addTest('SocialSyncs Client', true, 'SocialSyncsClient class is available');
+      } else {
+        addTest('SocialSyncs Client', false, 'SocialSyncsClient class is not available');
+      }
+    } catch (e) {
+      addTest('SocialSyncs Client', false, e.message);
+    }
+
+    // Test 5: SocialSyncs client initialization
+    try {
+      const client = getSocialSyncsClient();
+      if (client) {
+        addTest('SocialSyncs Instance', true, 'getSocialSyncsClient() returns instance');
+      } else {
+        addTest('SocialSyncs Instance', false, 'getSocialSyncsClient() returns null');
+      }
+    } catch (e) {
+      addTest('SocialSyncs Instance', false, e.message);
+    }
+
+    // Test 6: Config values
+    try {
+      if (APP_CONFIG && APP_CONFIG.supabaseUrl && APP_CONFIG.supabaseAnonKey) {
+        addTest('Config Values', true, 'Supabase URL and Anon Key are configured');
+      } else {
+        addTest('Config Values', false, 'Missing Supabase URL or Anon Key');
+      }
+    } catch (e) {
+      addTest('Config Values', false, e.message);
+    }
+
+    // Test 7: SocialSyncs methods
+    try {
+      const client = getSocialSyncsClient();
+      if (client && typeof client.getProfile === 'function') {
+        addTest('SocialSyncs Methods', true, 'SocialSyncs client has required methods');
+      } else {
+        addTest('SocialSyncs Methods', false, 'SocialSyncs client missing methods');
+      }
+    } catch (e) {
+      addTest('SocialSyncs Methods', false, e.message);
+    }
+
+    console.log('All tests completed');
+  </script>
+</body>
+</html>

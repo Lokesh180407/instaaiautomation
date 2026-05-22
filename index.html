@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InstaAutomate — Instagram Automation That Doesn't Cost a Fortune</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="baseUrl.js"></script>
+  <style>
+    :root{
+      --bg:#0A0F1E;
+      --card:#1E2536;
+      --text:#FFFFFF;
+      --muted:rgba(255,255,255,.7);
+      --accent:#7C3AED;
+      --accent2:#EC4899;
+      --border:rgba(255,255,255,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 18% 8%, rgba(124,58,237,.25), transparent 60%),
+                  radial-gradient(900px 600px at 88% 18%, rgba(236,72,153,.18), transparent 55%),
+                  linear-gradient(180deg, #070A14 0%, #0A0F1E 100%);
+      color:var(--text);
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+    .container{max-width:1120px;margin:0 auto;padding:0 20px}
+
+    /* Top bar */
+    .topbar{
+      position:sticky;top:0;z-index:20;
+      backdrop-filter: blur(14px);
+      background: rgba(10,15,30,.55);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:800;letter-spacing:.2px}
+    .brand-mark{
+      width:38px;height:38px;border-radius:12px;
+      display:grid;place-items:center;
+      background: linear-gradient(135deg,var(--accent),var(--accent2));
+      box-shadow: 0 12px 30px rgba(124,58,237,.25);
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .brand-text{font-family:"Clash Display", sans-serif;font-size:18px}
+
+    .top-actions{display:flex;gap:10px;align-items:center}
+    .btn{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:12px;
+      font-weight:700;
+      text-decoration:none;
+      transition:transform .15s ease, border-color .15s ease, background .15s ease;
+      display:inline-flex;align-items:center;gap:10px;justify-content:center;
+      cursor:pointer;
+    }
+    .btn:hover{transform: translateY(-2px);border-color: rgba(124,58,237,.5);background: rgba(124,58,237,.08)}
+    .btn-primary{
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 120%);
+      border-color: rgba(255,255,255,.15);
+      box-shadow: 0 18px 44px rgba(124,58,237,.22);
+    }
+    .btn-primary:hover{background: linear-gradient(135deg, #6D28D9 0%, #E137A0 120%)}
+
+    /* Hero */
+    .hero{padding:54px 0 26px; position:relative}
+    .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:center}
+    @media(max-width:960px){.hero-grid{grid-template-columns:1fr;}}
+
+    .eyebrow{
+      display:inline-flex;gap:10px;align-items:center;
+      padding:8px 12px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color:var(--muted);
+      font-weight:700;
+      font-size:13px;
+    }
+    .hero h1{
+      margin:14px 0 12px;
+      font-family:"Clash Display", sans-serif;
+      font-size:56px;
+      line-height:1.02;
+      letter-spacing:-1px;
+    }
+    @media(max-width:520px){.hero h1{font-size:40px}}
+
+    .hero p{color:var(--muted);font-size:18px;line-height:1.6;max-width:560px}
+
+    .hero-cta{display:flex;gap:12px;align-items:center;margin-top:22px;flex-wrap:wrap}
+    .fineprint{color:rgba(255,255,255,.55);font-size:13px;margin-top:10px}
+
+    /* Right panel */
+    .hero-panel{
+      background: rgba(30,37,54,.72);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:20px;
+      padding:18px;
+      box-shadow: 0 28px 70px rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .hero-panel::before{
+      content:"";
+      position:absolute;inset:-2px;
+      background: radial-gradient(600px 240px at 30% 0%, rgba(124,58,237,.35), transparent 60%),
+                  radial-gradient(500px 220px at 90% 20%, rgba(236,72,153,.25), transparent 55%);
+      z-index:0;
+    }
+    .hero-panel > *{position:relative;z-index:1}
+
+    .panel-title{font-family:"Clash Display";font-size:18px;font-weight:700;margin:0 0 8px}
+    .panel-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .panel-item{
+      display:flex;gap:10px;align-items:flex-start;
+      padding:12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .panel-item .k{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;background: rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.35)}
+    .panel-item b{display:block;font-size:14px;margin-bottom:2px}
+    .panel-item span{color:var(--muted);font-size:13px;line-height:1.4}
+
+    /* Sections */
+    .section{padding:22px 0}
+    .section h2{font-family:"Clash Display";font-size:28px;margin:0 0 14px}
+    .muted{color:var(--muted)}
+
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:900px){.cards{grid-template-columns:1fr}}
+    .feature-card{
+      background: rgba(30,37,54,.72);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      padding:16px;
+      transition:transform .18s ease,border-color .18s ease;
+      min-height:140px;
+    }
+    .feature-card:hover{transform: translateY(-4px);border-color: rgba(124,58,237,.5)}
+    .feature-top{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+    .feature-icon{width:42px;height:42px;border-radius:16px;display:grid;place-items:center;background: rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35)}
+    .feature-card h3{margin:0;font-size:16px}
+    .feature-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+
+    /* Pricing */
+    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:900px){.pricing-grid{grid-template-columns:1fr}}
+    .price-card{
+      background: rgba(30,37,54,.72);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+    }
+    .price-card.popular{border-color: rgba(124,58,237,.55)}
+    .pill{position:absolute;top:14px;right:14px;background: rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.45);color:#E9D5FF;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800}
+    .price-title{font-family:"Clash Display";font-size:18px;font-weight:800;margin:0 0 6px}
+    .price-amt{font-family:"Clash Display";font-size:42px;font-weight:800;margin:10px 0 6px}
+    .price-sub{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 14px}
+    .price-features{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+    .price-features li{color:var(--muted);font-size:14px;display:flex;gap:10px;align-items:flex-start}
+    .check{width:18px;height:18px;border-radius:7px;background: rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);display:grid;place-items:center;color:#34D399;font-weight:900;flex-shrink:0}
+
+    /* Comparison */
+    .table-wrap{background: rgba(30,37,54,.72);border:1px solid rgba(255,255,255,.10);border-radius:18px;overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;vertical-align:top}
+    th{font-size:13px;color:rgba(255,255,255,.8);font-weight:900;background: rgba(255,255,255,.04)}
+    td{font-size:14px;color:var(--muted)}
+    .td-strong{color:#fff;font-weight:800}
+
+    /* Footer */
+    footer{padding:30px 0 60px;color:rgba(255,255,255,.65)}
+    .footer-grid{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .links{display:flex;gap:14px;flex-wrap:wrap}
+    .links a{color:rgba(255,255,255,.7);text-decoration:none;font-weight:700}
+    .links a:hover{color:#fff;text-decoration:underline}
+
+    /* Smooth scroll */
+    .anchor{scroll-margin-top:90px}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand" aria-label="InstaAutomate">
+        <div class="brand-mark">⚡</div>
+        <div class="brand-text">InstaAutomate</div>
+      </div>
+      <div class="top-actions">
+        <a class="btn" href="auth.html">Sign in</a>
+        <a class="btn" href="dashboard.html">Dashboard</a>
+        <a class="btn" href="admin-login.html">Admin</a>
+        <a class="btn btn-primary" href="auth.html">Start free</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow">🤖 AI-powered Instagram Automation • ⚡ Cheaper than ManyChat</div>
+        <h1>Instagram Automation<br/>That Doesn't Cost a Fortune</h1>
+        <p>Auto DM + comment replies, reel operator workflows, templates, and AI analysis—powered by your own AI API key. Built for real engagement workflows, not spam.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="auth.html" style="padding:12px 18px;">Start Free — No Credit Card</a>
+          <a class="btn" href="connect.html" id="try-connect" style="padding:12px 18px; display:none;">Connect Instagram</a>
+        </div>
+        <div class="fineprint">You’ll be redirected to the dashboard after signup/login.</div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="panel-title">Built like a real operator</div>
+        <div class="panel-list">
+          <div class="panel-item">
+            <div class="k">💬</div>
+            <div>
+              <b>Auto DM flows</b>
+              <span>Keyword triggers • templates • AI replies (per user key)</span>
+            </div>
+          </div>
+          <div class="panel-item">
+            <div class="k">🗣️</div>
+            <div>
+              <b>Auto comment replies</b>
+              <span>Per comment / per reel rules with safe targeting limits</span>
+            </div>
+          </div>
+          <div class="panel-item">
+            <div class="k">🎬</div>
+            <div>
+              <b>Reels Operator + consistency tracking</b>
+              <span>Schedule-like workflow + streaks + admin controls</span>
+            </div>
+          </div>
+          <div class="panel-item">
+            <div class="k">🔒</div>
+            <div>
+              <b>Graph API compliant backend</b>
+              <span>Tokens stay server-side; webhooks respond fast</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="section anchor" id="features">
+    <div class="container">
+      <h2>Everything ManyChat does — and more</h2>
+      <div class="cards">
+        <div class="feature-card">
+          <div class="feature-top">
+            <div class="feature-icon">🧩</div>
+            <h3>Flows & keywords</h3>
+          </div>
+          <p>Create DM/comment operator rules with contains/exact/starts-with matching, reply-once control, and AI/text modes.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-top">
+            <div class="feature-icon">🧠</div>
+            <h3>Your AI key</h3>
+          </div>
+          <p>Plug in OpenAI/Anthropic/Gemini keys from Settings. AI replies use your system prompt + conversation context.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-top">
+            <div class="feature-icon">📦</div>
+            <h3>Templates & variables</h3>
+          </div>
+          <p>Reusable captions and replies with variables like <b>{{username}}</b>, <b>{{name}}</b>, <b>{{link}}</b>.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-top">
+            <div class="feature-icon">🎬</div>
+            <h3>Reels Operator</h3>
+          </div>
+          <p>Per-reel automations (DM + comment) plus reels catalog, metrics, and consistency calendar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-top">
+            <div class="feature-icon">📊</div>
+            <h3>Analytics</h3>
+          </div>
+          <p>Track events and reply types over time. Export CSV for reporting and iteration.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-top">
+            <div class="feature-icon">⚙️</div>
+            <h3>Admin controls</h3>
+          </div>
+          <p>Usage tracking, safe limits, and operator management tools so you can run multiple business accounts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section anchor" id="pricing">
+    <div class="container">
+      <h2>Pricing</h2>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="price-title">Free</div>
+          <div class="price-amt">₹0</div>
+          <div class="price-sub">Perfect to test your automations.</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> 1 connected Instagram account</li>
+            <li><span class="check">✓</span> Basic DM flows & templates</li>
+            <li><span class="check">✓</span> Reels consistency calendar</li>
+          </ul>
+          <div style="margin-top:16px;"><a class="btn" href="auth.html" style="width:100%">Start Free</a></div>
+        </div>
+
+        <div class="price-card popular">
+          <div class="pill">Most Popular</div>
+          <div class="price-title">Starter</div>
+          <div class="price-amt">₹199/mo</div>
+          <div class="price-sub">For creators running daily operator workflows.</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> Multiple flows (DM + comments)</li>
+            <li><span class="check">✓</span> AI replies using your own key</li>
+            <li><span class="check">✓</span> Per-reel automation rules</li>
+          </ul>
+          <div style="margin-top:16px;"><a class="btn btn-primary" href="auth.html" style="width:100%">Go Starter</a></div>
+        </div>
+
+        <div class="price-card">
+          <div class="price-title">Pro</div>
+          <div class="price-amt">₹499/mo</div>
+          <div class="price-sub">For agencies managing business accounts.</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> Advanced analytics & exports</li>
+            <li><span class="check">✓</span> Campaigns for conversation partners</li>
+            <li><span class="check">✓</span> Admin controls + usage insights</li>
+          </ul>
+          <div style="margin-top:16px;"><a class="btn" href="auth.html" style="width:100%">Go Pro</a></div>
+        </div>
+      </div>
+
+      <div style="margin-top:22px;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>InstaAutomate</th>
+                <th>ManyChat (typical)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-strong">AI replies</td>
+                <td>Per-user API key + system prompts</td>
+                <td>Often higher cost tier</td>
+              </tr>
+              <tr>
+                <td class="td-strong">Templates</td>
+                <td>Variables + media support</td>
+                <td>Similar concept</td>
+              </tr>
+              <tr>
+                <td class="td-strong">Operator workflows</td>
+                <td>DM + comments + reels automations</td>
+                <td>DM-first focus</td>
+              </tr>
+              <tr>
+                <td class="td-strong">Consistency tracking</td>
+                <td>Reels calendar + streak metrics</td>
+                <td>Not always included</td>
+              </tr>
+              <tr>
+                <td class="td-strong">Backend compliance</td>
+                <td>Tokens server-side + webhook verification</td>
+                <td>Depends on implementation</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="cta">
+    <div class="container">
+      <div class="hero-panel" style="padding:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin:0 0 8px; font-family: 'Clash Display', sans-serif; font-size:26px;">Ready to run your Instagram like an operator?</h2>
+            <p style="margin:0;color:var(--muted);line-height:1.6;max-width:680px;">Create your account, connect Instagram, then build flows for DMs, comments, and reels automations.</p>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+<a class="btn" href="auth.html">Sign in</a>
+          <a class="btn btn-primary" href="auth.html" style="padding:12px 18px">Start Free</a>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container footer-grid">
+      <div>© <span id="y"></span> InstaAutomate. All rights reserved.</div>
+      <div class="links">
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // If logged in, optionally show connect button.
+    // We keep it simple to avoid breaking existing auth routing.
+    try{
+      const token = localStorage.getItem('supabase.auth.token');
+      const el = document.getElementById('try-connect');
+      if (token && el) el.style.display = 'inline-flex';
+    }catch(_){ }
+  </script>
+</body>
+</html>
+

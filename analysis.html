@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Account Analysis & Growth Audit - InstaAutomate</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .audit-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 32px;
+      margin-top: 24px;
+    }
+    @media(max-width: 991px) {
+      .audit-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .score-circle-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      text-align: center;
+    }
+    .score-circle {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) 0%, var(--bg-primary) 0%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 20px;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+    }
+    .score-circle::before {
+      content: '';
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: var(--bg-secondary);
+    }
+    .score-val {
+      position: absolute;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 40px;
+      font-weight: 700;
+      color: white;
+    }
+    .analysis-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .analysis-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent);
+    }
+    .analysis-card.success-border::before {
+      background: var(--success);
+    }
+    .analysis-card.warning-border::before {
+      background: var(--warning);
+    }
+    .analysis-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .analysis-body {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .analysis-body ul {
+      margin-left: 20px;
+      margin-top: 10px;
+    }
+    .analysis-body li {
+      margin-bottom: 8px;
+    }
+
+    /* Scanning animation */
+    .scan-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 32px;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      background: rgba(30, 37, 54, 0.4);
+    }
+    .scan-sparkles {
+      font-size: 64px;
+      animation: pulsate 1.5s infinite ease-in-out;
+      margin-bottom: 24px;
+    }
+    @keyframes pulsate {
+      0% { transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 5px rgba(124, 58, 237, 0.4)); }
+      50% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 25px rgba(124, 58, 237, 0.8)); }
+      100% { transform: scale(1); opacity: 0.7; filter: drop-shadow(0 0 5px rgba(124, 58, 237, 0.4)); }
+    }
+    .scan-progress {
+      width: 320px;
+      height: 6px;
+      background: var(--bg-primary);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 20px auto;
+      border: 1px solid var(--border);
+    }
+    .scan-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #4F46E5);
+      width: 0%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .scan-step {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    /* Tag Cloud */
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .tag-cloud-item {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .tag-cloud-item.positive {
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span>🚀</span>
+        <span>InstaAutomate</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+          Dashboard
+        </a>
+        <a href="myaccount.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          My Account
+        </a>
+        <a href="connect.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+          Connect Instagram
+        </a>
+        <a href="reels.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          Reels Operator
+        </a>
+        <a href="flows.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+          Flows
+        </a>
+        <a href="inbox.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          Inbox
+        </a>
+        <a href="campaigns.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+          Campaigns
+        </a>
+        <a href="templates.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Templates
+        </a>
+        <a href="analytics.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          Analytics
+        </a>
+        <a href="analysis.html" class="sidebar-nav-item active">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+          AI Audit
+        </a>
+        <a href="settings.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Settings
+        </a>
+        <span id="adminSidebarLink"></span>
+      </nav>
+      <div style="margin-top: auto; padding-top: 24px; border-top: 1px solid var(--border);">
+        <button onclick="auth.signOut()" class="sidebar-nav-item" style="width: 100%; border: none; background: none; cursor: pointer;">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">AI Account Audit</h1>
+        <div class="quick-actions">
+          <button id="triggerAuditBtn" class="btn btn-primary" onclick="triggerAccountAudit()">
+            <span>✨</span> Analyze Account Growth
+          </button>
+        </div>
+      </div>
+
+      <div id="noAccountsWarning" class="card hidden" style="text-align: center; padding: 48px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🔗</div>
+        <h3 style="margin-bottom: 8px;">No Connected Account</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Please connect your Instagram account first before starting AI auditing.</p>
+        <a href="connect.html" class="btn btn-primary">Connect Instagram</a>
+      </div>
+
+      <div id="noApiKeyWarning" class="card hidden" style="text-align: center; padding: 48px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🔑</div>
+        <h3 style="margin-bottom: 8px;">No AI API Key Found</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">To run auto-analysis, you need to configure your own AI API Key under AI settings.</p>
+        <a href="settings.html?tab=ai" class="btn btn-primary">Configure AI Key</a>
+      </div>
+
+      <!-- Scanning Placeholder Screen -->
+      <div class="scan-container hidden" id="scanningScreen">
+        <div class="scan-sparkles">🧠✨</div>
+        <h3 style="margin-bottom: 8px;">Generating AI Growth Audit</h3>
+        <div class="scan-step" id="scanStepText">Connecting to API Key...</div>
+        <div class="scan-progress">
+          <div class="scan-progress-bar" id="scanProgressBar"></div>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 13px; max-width: 450px; margin: 0 auto;">Our AI engine is compiling your reels performance metrics, comments sentiment, flow trigger keywords, and drafting an optimizations playbook.</p>
+      </div>
+
+      <!-- Main Audit Content Display (hidden initially) -->
+      <div id="auditResults" class="hidden">
+        <div class="audit-grid">
+          <!-- Left Column (Audit Score & Quick Info) -->
+          <div>
+            <div class="score-circle-container">
+              <div class="score-circle" id="scoreCircle">
+                <span class="score-val" id="scoreValue">85</span>
+              </div>
+              <h3 style="font-family: 'Clash Display', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 8px; color: white;">Growth Potential</h3>
+              <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">Your account has strong keyword-to-conversion alignment, but lacks high Reels frequency.</p>
+              <div class="badge badge-success" style="font-size: 11px;">Active Potential</div>
+            </div>
+
+            <!-- Sentiment Tag Cloud -->
+            <div class="card" style="margin-top: 24px; padding: 20px;">
+              <h4 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; color: white;">Follower Keyword Hotlist</h4>
+              <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Words followers use most in comment interactions:</p>
+              <div class="tag-cloud" id="tagCloud">
+                <span class="tag-cloud-item positive">link</span>
+                <span class="tag-cloud-item positive">info</span>
+                <span class="tag-cloud-item positive">price</span>
+                <span class="tag-cloud-item">details</span>
+                <span class="tag-cloud-item">send</span>
+                <span class="tag-cloud-item">cost</span>
+                <span class="tag-cloud-item">growth</span>
+                <span class="tag-cloud-item">reels</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column (AI Playbooks) -->
+          <div>
+            <!-- AI Card 1: Posting Cadence Audit -->
+            <div class="analysis-card" id="cadenceCard">
+              <h3 class="analysis-title">
+                <span>📅</span> Posting Cadence & Consistency Audit
+              </h3>
+              <div class="analysis-body" id="cadenceContent">
+                Loading consistency analysis...
+              </div>
+            </div>
+
+            <!-- AI Card 2: Keyword Automation Ideas -->
+            <div class="analysis-card success-border" id="keywordCard">
+              <h3 class="analysis-title">
+                <span>💡</span> Automated Keyword & Flow Recommendations
+              </h3>
+              <div class="analysis-body" id="keywordContent">
+                Loading keyword automation ideas...
+              </div>
+            </div>
+
+            <!-- AI Card 3: Actionable Growth Checklist -->
+            <div class="analysis-card warning-border" id="checklistCard">
+              <h3 class="analysis-title">
+                <span>🚀</span> Next Best Action Growth Checklist
+              </h3>
+              <div class="analysis-body" id="checklistContent">
+                Loading strategic checklist...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trigger Landing Screen -->
+      <div class="card" id="auditLanding" style="text-align: center; padding: 64px 32px; border: 1px dashed var(--border); background: var(--bg-secondary);">
+        <div style="font-size: 56px; margin-bottom: 20px;">🔬✨</div>
+        <h2 style="font-family: 'Clash Display', sans-serif; font-size: 24px; font-weight: 600; margin-bottom: 8px;">Run AI Performance Audit</h2>
+        <p style="color: var(--text-secondary); max-width: 550px; margin: 0 auto 32px; line-height: 1.6;">
+          Deploy your custom OpenAI, Anthropic, or Gemini API keys to conduct a premium audit of comment logs, post frequency dates, and automated flows. Receive tactical suggestions, optimal triggers, and streaks analysis.
+        </p>
+        <button class="btn btn-primary" onclick="triggerAccountAudit()" style="padding: 14px 32px;">
+          🚀 Start Live Account Audit
+        </button>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="baseUrl.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/instagram.js"></script>
+  <script src="js/analysis.js"></script>
+</body>
+</html>

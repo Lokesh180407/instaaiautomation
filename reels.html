@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reels Automation & Consistency - InstaAutomate</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .reels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .reel-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .reel-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 12px 30px rgba(124, 58, 237, 0.15);
+    }
+    .reel-media {
+      height: 380px;
+      position: relative;
+      background: #000;
+      overflow: hidden;
+    }
+    .reel-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    .reel-card:hover .reel-media img {
+      transform: scale(1.05);
+    }
+    .reel-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+    }
+    .reel-badge {
+      background: rgba(10, 15, 30, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .reel-badge.automated {
+      background: linear-gradient(135deg, var(--accent), #4F46E5);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .reel-stats-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(10, 15, 30, 0.95) 0%, rgba(10, 15, 30, 0) 100%);
+      padding: 40px 16px 16px;
+      display: flex;
+      justify-content: space-around;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .reel-stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .reel-content {
+      padding: 20px;
+    }
+    .reel-caption {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+      height: 42px;
+    }
+    .reel-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+    .posted-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Consistency Calendar Component */
+    .consistency-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .consistency-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 32px;
+    }
+    @media(max-width: 991px) {
+      .consistency-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .calendar-container {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .calendar-title {
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .calendar-month-nav {
+      display: flex;
+      gap: 8px;
+    }
+    .calendar-days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+    .calendar-weekday {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      padding-bottom: 8px;
+    }
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .calendar-day:hover {
+      border-color: var(--accent);
+    }
+    .calendar-day.active-post {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--success);
+      color: var(--success);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+    .calendar-day.active-post::after {
+      content: '✓';
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      font-size: 8px;
+      font-weight: bold;
+    }
+    .calendar-day.today {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+    .consistency-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .c-stat-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .c-stat-val {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+    .c-stat-lbl {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Modal Styling Additions */
+    .chip-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      min-height: 46px;
+      margin-top: 8px;
+    }
+    .keyword-chip {
+      background: var(--accent);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .keyword-chip button {
+      background: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+    .keyword-chip button:hover {
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span>🚀</span>
+        <span>InstaAutomate</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+          Dashboard
+        </a>
+        <a href="myaccount.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          My Account
+        </a>
+        <a href="connect.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+          Connect Instagram
+        </a>
+        <a href="reels.html" class="sidebar-nav-item active">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          Reels Operator
+        </a>
+        <a href="flows.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+          Flows
+        </a>
+        <a href="inbox.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          Inbox
+        </a>
+        <a href="campaigns.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+          Campaigns
+        </a>
+        <a href="templates.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Templates
+        </a>
+        <a href="analytics.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          Analytics
+        </a>
+        <a href="analysis.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+          AI Audit
+        </a>
+        <a href="settings.html" class="sidebar-nav-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Settings
+        </a>
+        <span id="adminSidebarLink"></span>
+      </nav>
+      <div style="margin-top: auto; padding-top: 24px; border-top: 1px solid var(--border);">
+        <button onclick="auth.signOut()" class="sidebar-nav-item" style="width: 100%; border: none; background: none; cursor: pointer;">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Reels Operator</h1>
+        <div class="quick-actions">
+          <button id="syncReelsBtn" class="btn btn-secondary" onclick="syncAllReels()">
+            <span>🔄</span> Sync Reels
+          </button>
+        </div>
+      </div>
+
+      <!-- Consistency Section -->
+      <div class="consistency-section">
+        <h2 style="font-family: 'Clash Display', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 20px;">Reels Consistency Tracking</h2>
+        
+        <div class="consistency-grid">
+          <!-- Calendar Tracker -->
+          <div class="calendar-container">
+            <div class="calendar-header">
+              <div class="calendar-title" id="calendarTitle">May 2026</div>
+              <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); align-items: center;">
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--success);"></span> Posted
+              </div>
+            </div>
+            <div class="calendar-days-grid" id="calendarGrid">
+              <!-- Grid generated via JS -->
+            </div>
+          </div>
+
+          <!-- Streak & Statistics -->
+          <div class="consistency-stats">
+            <div class="c-stat-card">
+              <div class="c-stat-val" id="postStreak">0 Days</div>
+              <div class="c-stat-lbl">Active Streak</div>
+            </div>
+            <div class="c-stat-card">
+              <div class="c-stat-val" id="postFrequency">0.0/wk</div>
+              <div class="c-stat-lbl">Post Frequency</div>
+            </div>
+            <div class="c-stat-card">
+              <div class="c-stat-val" id="consistencyScore">0%</div>
+              <div class="c-stat-lbl">Consistency Index</div>
+            </div>
+            <div class="c-stat-card">
+              <div class="c-stat-val" id="totalReelsCount">0</div>
+              <div class="c-stat-lbl">Total Cached Reels</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reels Catalog Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 8px;">
+        <h2 style="font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 600;">Reels Catalog & Automations</h2>
+        <span style="font-size: 14px; color: var(--text-secondary);" id="catalogSubtext">Set custom comment & DM replies per Reel</span>
+      </div>
+
+      <div id="reelsLoading" class="hidden" style="text-align: center; padding: 48px;">
+        <div class="loading"></div>
+        <p style="margin-top: 12px; color: var(--text-secondary);">Syncing and loading Instagram Reels...</p>
+      </div>
+
+      <div id="noAccountsWarning" class="card hidden" style="text-align: center; padding: 48px; margin-top: 24px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🔗</div>
+        <h3 style="margin-bottom: 8px;">No Connected Account</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Please connect your Instagram account first before managing Reels.</p>
+        <a href="connect.html" class="btn btn-primary">Connect Instagram</a>
+      </div>
+
+      <div id="noReelsWarning" class="card hidden" style="text-align: center; padding: 48px; margin-top: 24px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🎬</div>
+        <h3 style="margin-bottom: 8px;">No Reels Found</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">We couldn't find any Reels on your connected account. Click "Sync Reels" to fetch them.</p>
+        <button class="btn btn-primary" onclick="syncAllReels()">Sync Reels Now</button>
+      </div>
+
+      <!-- Reels Grid -->
+      <div class="reels-grid" id="reelsGrid">
+        <!-- Reel Cards generated via JS -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Reels Automation Setup Modal -->
+  <div class="modal-overlay hidden" id="automationModal">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Set Reel Automation</h3>
+        <button class="modal-close" onclick="closeAutomationModal()">✕</button>
+      </div>
+      <form id="automationForm">
+        <input type="hidden" id="modalMediaId">
+        <input type="hidden" id="modalFlowId">
+
+        <div style="display: flex; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+          <img id="modalReelThumb" src="" alt="Thumbnail" style="width: 80px; height: 110px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+          <div>
+            <h4 style="font-weight: 600; font-size: 14px; margin-bottom: 6px;">Instagram Reel</h4>
+            <p id="modalReelCaption" style="font-size: 13px; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;"></p>
+          </div>
+        </div>
+
+        <!-- 1. Trigger Keywords -->
+        <div class="input-group">
+          <label>Trigger Keywords (User comments containing these keywords will trigger this flow)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="keywordInput" placeholder="e.g., info, link, send, guide" style="flex: 1;">
+            <button type="button" class="btn btn-secondary" onclick="addKeyword()" style="padding: 0 16px;">Add</button>
+          </div>
+          <div class="chip-container" id="keywordChips">
+            <!-- Chips generated via JS -->
+          </div>
+          <p style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">Leave empty to trigger on *any* comment posted on this Reel!</p>
+        </div>
+
+        <!-- 2. Comment Match Condition -->
+        <div class="input-group">
+          <label for="matchCondition">Match Condition</label>
+          <select id="matchCondition">
+            <option value="contains">Comment contains keyword</option>
+            <option value="exact">Comment matches keyword exactly</option>
+            <option value="starts_with">Comment starts with keyword</option>
+          </select>
+        </div>
+
+        <!-- 3. Automated Comment Reply -->
+        <div class="input-group">
+          <label for="commentReplyText">Automated Comment Reply (Write a public reply to their comment)</label>
+          <input type="text" id="commentReplyText" placeholder="e.g., Sent you a DM! Check your inbox 📩" required>
+          <p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Example: "Sent! Check your DMs 📩"</p>
+        </div>
+
+        <!-- 4. Response Type -->
+        <div class="input-group">
+          <label for="responseType">Private DM Response Type</label>
+          <select id="responseType" onchange="togglePrivateReplyFields()">
+            <option value="text">Standard Text Response</option>
+            <option value="ai">AI-Powered Conversation</option>
+          </select>
+        </div>
+
+        <!-- 5. Standard Text Response -->
+        <div class="input-group" id="textResponseGroup">
+          <label for="dmMessage">Private DM Message Content</label>
+          <textarea id="dmMessage" rows="4" placeholder="Hey! Here is the link you requested: https://example.com" required></textarea>
+        </div>
+
+        <!-- 6. AI-Powered Conversation -->
+        <div class="input-group hidden" id="aiResponseGroup">
+          <label for="aiSystemPrompt">Custom AI System Instructions</label>
+          <textarea id="aiSystemPrompt" rows="4" placeholder="You are a helpful assistant for InstaAutomate. Keep answers concise. Pitch our Starter plan at ₹199/month..."></textarea>
+          <p style="font-size: 11px; color: var(--warning); margin-top: 6px;">⚠️ Ensure your AI API Key is configured in Settings > AI Settings to enable AI auto-replies!</p>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+          <button type="button" class="btn btn-secondary" onclick="closeAutomationModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveAutomationBtn">Save Operator Flow</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="baseUrl.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/instagram.js"></script>
+  <script src="js/reels.js"></script>
+</body>
+</html>

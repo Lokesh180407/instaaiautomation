@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comments - InstaAutomate</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <!-- Sidebar will be injected by auth.js -->
+    </aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Comments</h1>
+        <button class="btn btn-primary" id="refreshCommentsBtn">Refresh</button>
+      </div>
+
+      <div class="loading hidden" id="commentsLoading">Loading comments...</div>
+      <div class="empty-state hidden" id="noCommentsWarning">
+        <div class="empty-state-icon">💬</div>
+        <div class="empty-state-title">No comments yet</div>
+        <div class="empty-state-description">Select a Reel or Post from the Reels page to view its comments.</div>
+      </div>
+
+      <div class="comments-grid" id="commentsGrid"></div>
+    </main>
+  </div>
+
+  <!-- Automation Modal (reuses same markup as reels) -->
+  <div class="modal-overlay hidden" id="automationModal">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Set Comment Automation</h3>
+        <button class="modal-close" onclick="closeAutomationModal()">✕</button>
+      </div>
+      <form id="automationForm">
+        <input type="hidden" id="modalCommentId" />
+        <input type="hidden" id="modalFlowId" />
+        <div class="input-group">
+          <label for="keywordInput">Trigger Keywords</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="keywordInput" placeholder="e.g., help, info" style="flex:1;" />
+            <button type="button" class="btn btn-secondary" onclick="addKeyword()">Add</button>
+          </div>
+          <div class="chip-container" id="keywordChips"></div>
+        </div>
+        <div class="input-group">
+          <label for="matchCondition">Match Condition</label>
+          <select id="matchCondition">
+            <option value="contains">Comment contains keyword</option>
+            <option value="exact">Comment matches exactly</option>
+            <option value="starts_with">Comment starts with keyword</option>
+          </select>
+        </div>
+        <div class="input-group" id="textResponseGroup">
+          <label for="dmMessage">Private DM Message</label>
+          <textarea id="dmMessage" rows="4" placeholder="Your DM reply..." required></textarea>
+        </div>
+        <div class="input-group hidden" id="aiResponseGroup">
+          <label for="aiSystemPrompt">AI System Prompt</label>
+          <textarea id="aiSystemPrompt" rows="4" placeholder="Custom AI instructions..."></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
+          <button type="button" class="btn btn-secondary" onclick="closeAutomationModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveAutomationBtn">Save Flow</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="baseUrl.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/instagram.js"></script>
+  <script src="js/comments.js"></script>
+</body>
+</html>

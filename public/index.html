@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot Automation Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+  <header class="app-header">
+  <div class="logo">🗨️ ChatFlow</div>
+  <nav class="top-nav">
+    <button id="btn-dashboard" class="nav-btn active">Dashboard</button>
+    <button id="btn-flows" class="nav-btn">Flows</button>
+
+    <button id="btn-analytics" class="nav-btn">Analytics</button>
+<button id="btn-messages" class="nav-btn">Messages</button>
+<button id="btn-reels" class="nav-btn">Reels</button>
+  </nav>
+  <button id="theme-toggle" class="nav-btn">Toggle Dark</button>
+  <div class="auth-area">
+    <button id="login-btn" class="auth-btn">Log In</button>
+  </div>
+</header>
+
+  <main class="app-main">
+    <!-- Dashboard -->
+    <section id="dashboard" class="section active">
+      <h1 class="section-title">Welcome back, <span id="user-name">Guest</span></h1>
+      <div class="cards-grid">
+        <div class="card">
+          <h2>Active Flows</h2>
+          <p id="flows-count">0</p>
+        </div>
+        <div class="card">
+          <h2>Messages Sent</h2>
+          <p id="messages-count">0</p>
+        </div>
+        <div class="card">
+          <h2>Contacts</h2>
+          <p id="contacts-count">0</p>
+        </div>
+        <div class="card">
+          <h2>Analytics</h2>
+          <button id="view-analytics" class="cta-btn">View</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Flows -->
+    <section id="flows" class="section hidden">
+      <h2 class="section-title">Your Flows</h2>
+      <ul id="flows-list" class="list"></ul>
+      <button id="create-flow" class="primary-btn">Create New Flow</button>
+    </section>
+
+    <!-- Messages -->
+    <section id="messages" class="section hidden">
+      <h2 class="section-title">Messages</h2>
+      <div id="messages-grid" class="card-list"></div>
+    </section>
+
+    <!-- Reels -->
+    <section id="reels" class="section hidden">
+      <h2 class="section-title">Reels</h2>
+      <div id="reels-grid" class="card-list"></div>
+    </section>
+
+    <!-- Analytics -->
+    <section id="analytics" class="section hidden">
+      <h2 class="section-title">Analytics Dashboard</h2>
+      <canvas id="analytics-canvas" width="800" height="400"></canvas>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

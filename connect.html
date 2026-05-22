@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Instagram — InstaFlow Pro</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="baseUrl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .connect-hero { text-align: center; padding: 40px 24px; max-width: 480px; margin: 0 auto; }
+    .connect-hero h2 { font-size: 22px; margin: 0 0 8px; }
+    .connect-hero p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin: 0 0 28px; }
+    .btn-connect-ig {
+      width: 100%; padding: 16px 24px; font-size: 16px; font-weight: 700;
+      background: linear-gradient(135deg, #833AB4, #E1306C, #F77737);
+      border: none; border-radius: 14px; color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      box-shadow: 0 12px 32px rgba(225, 48, 108, 0.35);
+    }
+    .btn-connect-ig:hover { transform: translateY(-2px); }
+    .btn-connect-ig:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .requirements { font-size: 12px; color: var(--text-muted); margin-top: 20px; text-align: left; }
+    .requirements li { margin: 6px 0; }
+    .connect-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .connect-tab { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text-secondary); cursor: pointer; font-weight: 600; font-size: 13px; }
+    .connect-tab.active { background: rgba(124,58,237,0.2); border-color: var(--accent); color: var(--text-primary); }
+    .connected-banner { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 24px; flex-wrap: wrap; }
+    .badge-webhook { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: rgba(16,185,129,0.2); color: #10B981; }
+    .test-result { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 13px; }
+    .test-result.success { background: rgba(16,185,129,0.15); color: #10B981; }
+    .test-result.error { background: rgba(239,68,68,0.15); color: #EF4444; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout" id="connectPage">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🚀</span><span>InstaFlow Pro</span></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item">Dashboard</a>
+        <a href="connect.html" class="sidebar-nav-item active">Connect Instagram</a>
+        <a href="flows.html" class="sidebar-nav-item">Flows</a>
+        <a href="inbox.html" class="sidebar-nav-item">Inbox</a>
+        <a href="settings.html" class="sidebar-nav-item">Settings</a>
+      </nav>
+      <div style="margin-top:auto;padding-top:24px;border-top:1px solid var(--border)">
+        <button onclick="auth.signOut()" class="sidebar-nav-item" style="width:100%;border:none;background:none;cursor:pointer">Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Connect Instagram</h1>
+        <p style="color:var(--text-secondary);margin-top:8px">One click — Meta handles permissions, page link, tokens & webhooks</p>
+      </div>
+
+      <div id="connectedAccounts"></div>
+
+      <div class="card" style="max-width:520px;margin:0 auto 24px;padding:0;overflow:hidden">
+        <div class="connect-hero">
+          <h2>Connect Instagram</h2>
+          <p>Log in with Facebook, select your Page & Instagram account. We automatically set up messaging webhooks — like ManyChat.</p>
+          <button type="button" id="connectInstagramBtn" class="btn-connect-ig">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            Connect Instagram
+          </button>
+          <ul class="requirements">
+            <li>Instagram <strong>Professional</strong> account (Business or Creator)</li>
+            <li>Linked to a <strong>Facebook Page</strong></li>
+            <li>You must be <strong>Page admin</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <details class="card" style="max-width:520px;margin:0 auto;padding:20px">
+        <summary style="cursor:pointer;font-weight:600">Advanced: manual token entry</summary>
+        <div style="margin-top:16px" id="manualPanel">
+          <div class="input-group">
+            <label>Access Token</label>
+            <input type="password" id="manualAccessToken" placeholder="EAAV…" style="font-family:monospace;font-size:12px">
+          </div>
+          <div class="input-group">
+            <label>Instagram Account ID</label>
+            <input type="text" id="manualInstagramId" placeholder="1286299316995794">
+          </div>
+          <button type="button" id="manualConnectBtn" class="btn btn-secondary" style="width:100%">Connect manually</button>
+        </div>
+      </details>
+
+      <div id="webhookGuide" class="card hidden" style="max-width:520px;margin:24px auto;padding:20px">
+        <h3 style="margin-top:0">Webhook status</h3>
+        <div id="webhookGuideContent"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/instagram.js"></script>
+  <script>
+    document.getElementById('connectInstagramBtn')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Opening Meta login…';
+      try {
+        await instagram.connectWithMetaOAuth();
+        loadConnectedAccounts();
+        setTimeout(() => { window.location.href = 'dashboard.html?connected=true'; }, 800);
+      } catch (err) {
+        if (!err.message?.includes('Redirecting')) showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg> Connect Instagram';
+      }
+    });
+
+    document.getElementById('manualConnectBtn')?.addEventListener('click', async () => {
+      const r = await instagram.connectManual(
+        APP_CONFIG.defaultAppId, null,
+        document.getElementById('manualAccessToken')?.value.trim(),
+        document.getElementById('manualInstagramId')?.value.trim()
+      );
+      if (r.success) window.location.href = 'dashboard.html?connected=true';
+    });
+  </script>
+</body>
+</html>

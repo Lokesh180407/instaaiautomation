@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — InstaFlow Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="../js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">InstaFlow <span>Admin</span></div>
+      <nav>
+        <a class="active" href="dashboard.html">Overview</a>
+        <a href="users.html">Users</a>
+        <a href="accounts.html">Admin Accounts</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+      <button type="button" class="logout" id="logoutBtn">Logout</button>
+    </aside>
+    <main class="main">
+      <header class="page-header">
+        <h1>Platform Overview</h1>
+        <p id="adminGreeting">Loading…</p>
+      </header>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><span class="label">Total users</span><strong id="statUsers">—</strong></div>
+        <div class="stat-card"><span class="label">Active today</span><strong id="statActive">—</strong></div>
+        <div class="stat-card"><span class="label">IG accounts</span><strong id="statIg">—</strong></div>
+        <div class="stat-card"><span class="label">Flows triggered today</span><strong id="statFlows">—</strong></div>
+      </div>
+      <section class="panel">
+        <h2>Recent signups</h2>
+        <div id="recentSignups" class="empty">Run foundation migration and deploy admin-api to load data.</div>
+      </section>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script>
+    requireAdminAuth();
+    loadAdminStats();
+  </script>
+</body>
+</html>

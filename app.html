@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InstaAutomate – Connect Instagram</title>
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>InstaAutomate</h1>
+    <p class="subtitle">One‑click Instagram connection – start automations instantly</p>
+    <button id="connect-instagram" class="primary-btn">Connect Instagram</button>
+    <div id="manual-toggle" class="link">Or connect manually</div>
+    <div id="manual-form" class="hidden">
+      <h2>Manual Connection</h2>
+      <p>Enter the values you obtained from Meta manually.</p>
+      <label>Page Access Token
+        <input type="text" id="manual-token" placeholder="Page Access Token" />
+      </label>
+      <label>Instagram Business Account ID
+        <input type="text" id="manual-instagram-id" placeholder="IG Business Account ID" />
+      </label>
+      <label>Facebook Page ID
+        <input type="text" id="manual-page-id" placeholder="FB Page ID" />
+      </label>
+      <button id="manual-submit" class="secondary-btn">Submit</button>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

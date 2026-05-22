@@ -1,0 +1,24 @@
+{
+  "entry": [
+    {
+      "messaging": [
+        {
+          "sender": { "id": "111" },
+          "recipient": { "id": "222" },
+          "message": { "mid": "m1", "text": "info" }
+        }
+      ],
+      "changes": [
+        {
+          "field": "comments",
+          "value": {
+            "id": "c1",
+            "text": "info link please",
+            "from": { "id": "111" }
+          }
+        }
+      ]
+    }
+  ]
+}
+

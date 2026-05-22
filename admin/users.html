@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users — InstaFlow Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="../js/config.js"></script>
+  <link rel="stylesheet" href="admin.css" />
+  <style>
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">InstaFlow <span>Admin</span></div>
+      <nav>
+        <a href="dashboard.html">Overview</a>
+        <a class="active" href="users.html">Users</a>
+        <a href="accounts.html">Admin Accounts</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+      <button type="button" class="logout" id="logoutBtn">Logout</button>
+    </aside>
+    <main class="main">
+      <header class="page-header">
+        <h1>Users</h1>
+        <p>Manage customer accounts and plans.</p>
+      </header>
+      <section class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Plan</th>
+              <th>Status</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable"><tr><td colspan="5">Loading…</td></tr></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script>
+    requireAdminAuth();
+    (async () => {
+      try {
+        const res = await fetch(`${ADMIN_API()}/users`, { headers: adminHeaders() });
+        const data = await res.json();
+        const tbody = document.getElementById('usersTable');
+        if (!data.users?.length) {
+          tbody.innerHTML = '<tr><td colspan="5">No users yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.users.map(u => `
+          <tr>
+            <td>${u.email || '—'}</td>
+            <td>${u.full_name || '—'}</td>
+            <td>${u.plan_name || 'free'}</td>
+            <td>${u.is_active === false ? 'Suspended' : (u.subscription_status || 'inactive')}</td>
+            <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+          </tr>
+        `).join('');
+      } catch {
+        document.getElementById('usersTable').innerHTML =
+          '<tr><td colspan="5">Deploy admin-api and run foundation migration.</td></tr>';
+      }
+    })();
+  </script>
+</body>
+</html>

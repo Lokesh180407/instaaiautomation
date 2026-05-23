@@ -218,6 +218,9 @@ const instagram = {
       ? { Authorization: `Bearer ${session.session.access_token}` }
       : {};
 
+    console.log('FINAL OAUTH URL INIT');
+    console.log('REDIRECT_URI (runtime):', REDIRECT_URI);
+
     const { data: startData, error: startErr } = await supabase.functions.invoke('instagram-oauth', {
       body: { action: 'start', redirect_uri: REDIRECT_URI },
       headers

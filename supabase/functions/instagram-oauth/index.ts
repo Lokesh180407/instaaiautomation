@@ -53,6 +53,7 @@ Deno.serve(async (req: Request) => {
     if (action === "start" || (!body.code && req.method === "POST" && !action)) {
       const state = crypto.randomUUID();
       const oauth_url = buildFacebookOAuthUrl(appId, redirectUri, state);
+      console.log("OAUTH START", { redirectUri, oauth_url });
       return json({ oauth_url, state, redirect_uri: redirectUri });
     }
 

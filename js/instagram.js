@@ -444,8 +444,14 @@ async function loadConnectedAccounts() {
   if (!container) return;
 
   if (success && data?.length) {
+    // Consider account fully connected if we have an IG access token + IG id.
+    // Webhook_subscribed may still be false; that must NOT block onboarding state.
     const a = data[0];
-    const wh = a.webhook_subscribed ? '<span class="badge-webhook">✅ Webhook Active</span>' : '<span class="badge">❌ Configure in Meta</span>';
+    // Onboarding state should depend on token presence, not webhook subscription.
+    const accountIsUsable = !!a.access_token && !!a.instagram_user_id;
+    const wh = a.webhook_subscribed ? '<span class="badge-webhook">✅ Webhook Active</span>' : '<span class="badge">❌ Webhook Not Connected</span>';
+    // If account is usable, we still show connected card (and hide connect CTA) even when webhooks are not yet active.
+    // The UI already renders the connected banner here, so nothing else needed; keep this variable for future styling.
     container.innerHTML = `
       <div class="connected-banner">
         <img src="${a.profile_picture_url || ''}" alt="" class="account-avatar" onerror="this.remove()">

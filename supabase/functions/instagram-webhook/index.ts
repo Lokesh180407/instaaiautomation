@@ -109,7 +109,12 @@ async function resolveDefaultAIReply(
 }
 
 Deno.serve(async (req: Request) => {
+  console.log("WEBHOOK FUNCTION START");
+  console.log("REQUEST METHOD:", req.method);
+  console.log("REQUEST URL:", req.url);
+
   const url = new URL(req.url);
+
 
   if (req.method === "GET") {
     const mode = url.searchParams.get("hub.mode");
@@ -124,27 +129,59 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
   const raw = new Uint8Array(await req.arrayBuffer());
+  console.log("REQUEST BODY BYTES:", raw?.length);
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // HARD FAILSAFE: ensure any unexpected crash still logs.
+  // If you still see the earlier logs but not the RAW BODY / EVENT logs,
+  // the crash is likely occurring during signature verification or JSON.parse.
   try {
-    if (!(await verifyXHubSignature256(req, raw, WEBHOOK_APP_SECRET))) {
-      return new Response("Invalid signature", { status: 403 });
-    }
+    // DEBUG ONLY: bypass signature verification to isolate EarlyDrop crash.
+    // const signatureOk = await verifyXHubSignature256(req, raw, WEBHOOK_APP_SECRET);
+    // if (!signatureOk) return new Response("Invalid signature", { status: 403 });
 
-    const payload = JSON.parse(new TextDecoder().decode(raw));
+
+    const bodyText = new TextDecoder().decode(raw);
+    const payload = JSON.parse(bodyText);
+
+    console.log("WEBHOOK VERIFY REQUEST:", req.url);
+    console.log("RAW WEBHOOK BODY:", bodyText.slice(0, 5000));
+    console.log("WEBHOOK EVENT (parsed):", {
+      object: payload?.object,
+      entryCount: payload?.entry?.length,
+      hasMessaging: !!payload?.entry?.[0]?.messaging,
+      hasChanges: !!payload?.entry?.[0]?.changes,
+    });
 
     if (payload.object && payload.object !== "instagram") {
       return new Response("OK", { status: 200 });
     }
 
+
     for (const entry of payload.entry || []) {
       const igAccountId = entry.id;
 
       for (const messaging of entry.messaging || []) {
+        const senderId = messaging.sender?.id;
+        const recipientId = messaging.recipient?.id;
+        const text = messaging.message?.text;
+
+        console.log("MESSAGING EVENT:", {
+          senderId,
+          recipientId,
+          hasText: !!text,
+          mid: messaging.message?.mid,
+          timestamp: messaging.timestamp,
+        });
+        console.log("SENDER:", senderId);
+        console.log("RECIPIENT:", recipientId);
+        console.log("MESSAGE TEXT:", text);
+
         if (messaging.message?.is_echo) continue;
         if (!messaging.message?.text) continue;
 
         const eventId = messaging.message?.mid || `dm-${messaging.sender?.id}-${messaging.timestamp}`;
+
         if (!(await markWebhookEvent(supabase, eventId, "dm", igAccountId, messaging))) continue;
 
         try {

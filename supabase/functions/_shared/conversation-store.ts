@@ -25,33 +25,24 @@ export async function getAccountByIgId(supabase: any, igId: string): Promise<Acc
     };
   }
 
-  const CONFIG_ID = '00000000-0000-0000-0000-000000000001';
-  const { data: cfg } = await supabase
-    .from('instagram_config')
-    .select('*')
-    .eq('id', CONFIG_ID)
-    .eq('connected', true)
-    .maybeSingle();
-
-  if (cfg?.long_lived_token) {
-    return {
-      token: cfg.page_access_token || cfg.long_lived_token,
-      igId: cfg.instagram_account_id || igId,
-      userId: '',
-      accountRowId: CONFIG_ID,
-    };
-  }
   return null;
+
 }
 
 export async function upsertConversation(
   supabase: any,
   ctx: AccountContext,
   participantId: string,
+
   participantUsername?: string,
   lastMessage?: string,
 ): Promise<{ id: string; ai_enabled: boolean; bot_enabled: boolean; human_handoff: boolean } | null> {
   const accountKey = ctx.accountRowId || ctx.igId;
+  if (!accountKey) {
+    console.error('upsertConversation: missing instagram_account_id key');
+    return null;
+  }
+
   const profile = await fetchInstagramProfile(participantId, ctx.token);
 
   const { data: existing } = await supabase

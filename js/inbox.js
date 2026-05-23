@@ -122,9 +122,11 @@ function subscribeInboxRealtime() {
 }
 
 async function refreshConversationList() {
-  const { success, data } = await inbox.getConversations();
+  const { success, data, error } = await inbox.getConversations();
+  console.log('CONVERSATIONS QUERY RESULT:', { success, error, count: data?.length });
   if (success) conversationsCache = data;
 }
+
 
 async function initConversationList() {
   const listEl = document.getElementById('conversationList');
@@ -150,7 +152,9 @@ async function initConversationList() {
 }
 
 function renderConversationList(data) {
+  console.log('RENDER CONVERSATIONS:', data);
   const listEl = document.getElementById('conversationList');
+
   const activeId = document.getElementById('currentConversationId')?.value;
   listEl.innerHTML = data.map(conv => `
     <div class="conversation-item ${conv.id === activeId ? 'active' : ''}"

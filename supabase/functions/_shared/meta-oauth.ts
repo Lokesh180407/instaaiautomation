@@ -313,13 +313,25 @@ export async function completeMetaOAuthConnect(
   });
 
   console.log("STEP 4 START: subscribePageWebhooks");
-  // Step 4 — subscribe webhooks
-  const webhook =
-    await subscribePageWebhooks(
+  // Step 4 — subscribe webhooks (NON-BLOCKING)
+  // Webhook failures must not prevent account activation/persistence.
+  let webhook = { success: false };
+  try {
+    console.log("WEBHOOK REQUEST:", {
+      url: `${GRAPH}/${page.page_id}/subscribed_apps?access_token=***`,
+      page_id: page.page_id,
+    });
+    webhook = await subscribePageWebhooks(
       page.page_id,
       page.page_access_token,
     );
-  console.log("WEBHOOK RESULT:", { success: webhook?.success, error: webhook?.error });
+    console.log("WEBHOOK RESPONSE:", { success: webhook?.success });
+
+  } catch (error) {
+    console.error("FAILED STEP subscribePageWebhooks:", error);
+    webhook = { success: false };
+  }
+
 
   console.log("STEP 5 START: fetchIgProfile");
   // Step 5 — fetch IG profile

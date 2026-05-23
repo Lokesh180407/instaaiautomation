@@ -90,6 +90,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.location.pathname.includes('inbox')) {
     await requireAuth();
     initInboxPage();
+
+    // If Instagram was just connected, refresh conversations immediately.
+    // Inbox messages themselves depend on Meta webhooks, but this makes the UI responsive.
+    try {
+      await new Promise(r => setTimeout(r, 800));
+      refreshConversationList();
+    } catch (_) {}
   }
 });
 

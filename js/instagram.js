@@ -40,6 +40,9 @@ const instagram = {
       instagram_account_id: row.instagram_account_id || row.instagram_user_id,
       instagram_user_id: row.instagram_user_id || row.instagram_account_id,
       username: row.username,
+      page_id: row.page_id,
+      page_name: row.page_name,
+      page_access_token: row.page_access_token,
       profile_picture_url: row.profile_picture_url,
       long_lived_token: row.long_lived_token || row.access_token,
       access_token: row.access_token || row.long_lived_token,
@@ -372,7 +375,7 @@ async function loadConnectedAccounts() {
           <strong>@${a.username}</strong>
           <span class="badge badge-success">Connected</span>
           ${wh}
-          <div class="account-stats">IG: ${a.instagram_account_id} · Page: ${a.page_id || '—'}</div>
+          <div class="account-stats">IG: ${a.instagram_account_id} · Page: ${a.page_name || a.page_id || '—'}</div>
         </div>
         <button class="btn btn-secondary" onclick="instagram.syncAccount()">Sync</button>
         <button class="btn btn-danger" onclick="instagram.disconnectAccount().then(()=>location.reload())">Disconnect</button>

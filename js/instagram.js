@@ -247,6 +247,16 @@ const instagram = {
               instagramUserId: account.instagram_user_id,
               profile: account
             });
+
+            // Connected-state UX: refresh account + attempt auto-sync where supported
+            try { await this.syncAccount(); } catch (_) {}
+            try { await this.syncInbox(); } catch (_) {}
+            try { await this.syncReels(); } catch (_) {}
+            try { await this.syncComments(); } catch (_) {}
+
+            // Refresh connected UI immediately
+            try { window.location.reload(); } catch (_) {}
+
             resolve({ success: true, data: saved });
           } catch (e) {
             reject(e);
@@ -303,6 +313,35 @@ const instagram = {
     return { success: true, data: data ? [data] : [] };
   },
 
+  async deleteAccount() {
+    const user = await getCurrentUser();
+    if (!user?.id) throw new Error('Not logged in');
+
+    // If caller passes an accountId, use it; otherwise delete current user's active row
+    const accountId = arguments[0] || null;
+
+    const { error: delErr1 } = await supabase
+      .from('instagram_accounts')
+      .delete()
+      .eq('user_id', user.id)
+      .modify((q) => {
+        if (accountId) q.eq('id', accountId);
+      });
+    if (delErr1) throw delErr1;
+
+    // Best-effort cleanup
+    await supabase.from('instagram_config').update({ connected: false, long_lived_token: '' }).eq('id', CONFIG_ROW_ID).catch(() => {});
+
+    // Clear local/session UI state
+    try { localStorage.removeItem('activeInstagramAccountId'); } catch (_) {}
+
+    // Hard refresh the current page so UI resets cleanly
+    showToast('Instagram account removed');
+    setTimeout(() => window.location.reload(), 500);
+
+    return { success: true };
+  },
+
   async disconnectAccount() {
     const user = await getCurrentUser();
     await supabase.from('instagram_accounts').update({ is_active: false, access_token: '' }).eq('user_id', user.id);
@@ -322,6 +361,37 @@ const instagram = {
       followers_count: profile.followers_count || 0
     }).eq('user_id', user.id);
     showToast('Synced');
+    return { success: true };
+  },
+
+  async syncInbox() {
+    // Inbox UI updates via realtime; we just refresh conversation list if exists.
+    if (window.location.pathname.includes('inbox')) {
+      try {
+        await new Promise(r => setTimeout(r, 200));
+        if (window.refreshConversationList) await window.refreshConversationList();
+      } catch (_) {}
+    }
+    return { success: true };
+  },
+
+  async syncReels() {
+    // reels.js already has its own sync button / loader
+    // keep this as a placeholder hook for connected-state auto-sync.
+    try {
+      if (window.location.pathname.includes('reels')) {
+        if (window.syncAllReels) await window.syncAllReels();
+      }
+    } catch (_) {}
+    return { success: true };
+  },
+
+  async syncComments() {
+    try {
+      if (window.location.pathname.includes('comments')) {
+        if (window.loadComments) await window.loadComments();
+      }
+    } catch (_) {}
     return { success: true };
   },
 
@@ -347,6 +417,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+function confirmDeleteAccount(accountId) {
+  if (!confirm('Are you sure you want to remove this Instagram account?')) return;
+  instagram.deleteAccount(accountId).catch((e) => showToast(e.message || String(e), 'error'));
+}
+
 function initConnectPage() {
   window.addEventListener('message', (event) => {
     if (event.origin !== window.location.origin) return;
@@ -367,7 +442,7 @@ async function loadConnectedAccounts() {
 
   if (success && data?.length) {
     const a = data[0];
-    const wh = a.webhook_subscribed ? '<span class="badge-webhook">Webhooks auto-subscribed</span>' : '<span class="badge">Webhook: configure in Meta</span>';
+    const wh = a.webhook_subscribed ? '<span class="badge-webhook">✅ Webhook Active</span>' : '<span class="badge">❌ Configure in Meta</span>';
     container.innerHTML = `
       <div class="connected-banner">
         <img src="${a.profile_picture_url || ''}" alt="" class="account-avatar" onerror="this.remove()">
@@ -377,8 +452,9 @@ async function loadConnectedAccounts() {
           ${wh}
           <div class="account-stats">IG: ${a.instagram_account_id} · Page: ${a.page_name || a.page_id || '—'}</div>
         </div>
-        <button class="btn btn-secondary" onclick="instagram.syncAccount()">Sync</button>
+          <button class="btn btn-secondary" onclick="instagram.syncAccount()">Sync</button>
         <button class="btn btn-danger" onclick="instagram.disconnectAccount().then(()=>location.reload())">Disconnect</button>
+        <button class="btn btn-danger" style="margin-top:10px;width:100%" onclick="confirmDeleteAccount(${JSON.stringify(a.id)})">Delete Account</button>
       </div>`;
     document.getElementById('webhookGuide')?.classList.remove('hidden');
   } else {

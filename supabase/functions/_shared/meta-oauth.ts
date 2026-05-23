@@ -268,6 +268,7 @@ export async function completeMetaOAuthConnect(
   redirectUri: string,
   code: string,
 ): Promise<ConnectResult> {
+  console.log("STEP 1 START: exchangeCodeForToken");
   // Step 1 — short-lived token
   const short = await exchangeCodeForToken(
     appId,
@@ -275,6 +276,9 @@ export async function completeMetaOAuthConnect(
     redirectUri,
     code,
   );
+  console.log("SHORT TOKEN:", { ok: !!short?.access_token, len: short?.access_token?.length });
+
+  console.log("STEP 2 START: exchangeLongLivedUserToken");
 
   // Step 2 — long-lived token
   const long = await exchangeLongLivedUserToken(
@@ -282,6 +286,7 @@ export async function completeMetaOAuthConnect(
     appSecret,
     short.access_token,
   );
+  console.log("LONG TOKEN:", { ok: !!long?.access_token, len: long?.access_token?.length, expires_in: long?.expires_in });
 
   const userToken = long.access_token;
 
@@ -294,24 +299,39 @@ export async function completeMetaOAuthConnect(
     Date.now() + expiresIn * 1000,
   ).toISOString();
 
+  console.log("STEP 3 START: discoverInstagramBusinessAccount");
   // Step 3 — discover FB page + IG account
   const page =
     await discoverInstagramBusinessAccount(
       userToken,
     );
+  console.log("PAGE RESULT:", {
+    page_id: page?.page_id,
+    page_name: page?.page_name,
+    has_page_access_token: !!page?.page_access_token,
+    instagram_business_account_id: page?.instagram_business_account_id,
+  });
 
+  console.log("STEP 4 START: subscribePageWebhooks");
   // Step 4 — subscribe webhooks
   const webhook =
     await subscribePageWebhooks(
       page.page_id,
       page.page_access_token,
     );
+  console.log("WEBHOOK RESULT:", { success: webhook?.success, error: webhook?.error });
 
+  console.log("STEP 5 START: fetchIgProfile");
   // Step 5 — fetch IG profile
   const profile = await fetchIgProfile(
     page.instagram_business_account_id,
     page.page_access_token,
   );
+  console.log("PROFILE RESULT:", {
+    username: profile?.username,
+    has_name: !!profile?.name,
+    followers_count: profile?.followers_count,
+  });
 
   return {
     instagram_user_id:

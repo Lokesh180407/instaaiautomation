@@ -11,7 +11,7 @@ export const META_OAUTH_SCOPES = [
   "pages_read_engagement",
   "instagram_basic",
   "instagram_manage_messages",
-  "instagram_business_manage_comments",
+  "instagram_manage_comments",
 ].join(",");
 
 export const WEBHOOK_SUBSCRIBED_FIELDS = [

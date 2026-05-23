@@ -117,7 +117,7 @@ Deno.serve(async (req: Request) => {
     if (action === "instagram_url") {
       const state = crypto.randomUUID();
       const scopes =
-        "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments";
+        "instagram_basic,instagram_manage_messages,instagram_manage_comments";
       const oauth_url =
         `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`;
       return json({ oauth_url, state });

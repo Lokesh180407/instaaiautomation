@@ -2,15 +2,15 @@
  * Meta Facebook OAuth + Page/IG discovery + auto webhook subscribe
  * ManyChat-style one-click connect backend
  */
+
 const GRAPH = "https://graph.facebook.com/v23.0";
 
 export const META_OAUTH_SCOPES = [
   "pages_show_list",
   "pages_read_engagement",
-  "pages_manage_metadata",
   "instagram_basic",
   "instagram_manage_messages",
-  "business_management",
+  "instagram_business_manage_comments",
 ].join(",");
 
 export const WEBHOOK_SUBSCRIBED_FIELDS = [
@@ -20,13 +20,19 @@ export const WEBHOOK_SUBSCRIBED_FIELDS = [
   "message_reads",
 ].join(",");
 
-export function buildFacebookOAuthUrl(appId: string, redirectUri: string, state: string): string {
-  const oauth = new URL("https://www.facebook.com/v23.0/dialog/oauth");
+export function buildFacebookOAuthUrl(
+  appId: string,
+  redirectUri: string,
+  state: string,
+): string {
+  const oauth = new URL(`${GRAPH}/dialog/oauth`);
+
   oauth.searchParams.set("client_id", appId);
   oauth.searchParams.set("redirect_uri", redirectUri);
   oauth.searchParams.set("scope", META_OAUTH_SCOPES);
   oauth.searchParams.set("response_type", "code");
   oauth.searchParams.set("state", state);
+
   return oauth.toString();
 }
 
@@ -37,6 +43,7 @@ export async function exchangeCodeForToken(
   code: string,
 ): Promise<{ access_token: string; token_type?: string }> {
   const url = new URL(`${GRAPH}/oauth/access_token`);
+
   url.searchParams.set("client_id", appId);
   url.searchParams.set("client_secret", appSecret);
   url.searchParams.set("redirect_uri", redirectUri);
@@ -44,8 +51,15 @@ export async function exchangeCodeForToken(
 
   const res = await fetch(url.toString());
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "token_exchange_failed");
-  if (!data.access_token) throw new Error("No access token returned");
+
+  if (data.error) {
+    throw new Error(data.error.message || "token_exchange_failed");
+  }
+
+  if (!data.access_token) {
+    throw new Error("No access token returned");
+  }
+
   return data;
 }
 
@@ -55,6 +69,7 @@ export async function exchangeLongLivedUserToken(
   shortToken: string,
 ): Promise<{ access_token: string; expires_in?: number }> {
   const url = new URL(`${GRAPH}/oauth/access_token`);
+
   url.searchParams.set("grant_type", "fb_exchange_token");
   url.searchParams.set("client_id", appId);
   url.searchParams.set("client_secret", appSecret);
@@ -62,7 +77,11 @@ export async function exchangeLongLivedUserToken(
 
   const res = await fetch(url.toString());
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "long_lived_exchange_failed");
+
+  if (data.error) {
+    throw new Error(data.error.message || "long_lived_exchange_failed");
+  }
+
   return data;
 }
 
@@ -77,12 +96,19 @@ export async function discoverInstagramBusinessAccount(
   userAccessToken: string,
 ): Promise<PageWithIg> {
   const accountsRes = await fetch(
-    `${GRAPH}/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${encodeURIComponent(userAccessToken)}`,
+    `${GRAPH}/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${encodeURIComponent(
+      userAccessToken,
+    )}`,
   );
+
   const accountsData = await accountsRes.json();
-  if (accountsData.error) throw new Error(accountsData.error.message);
+
+  if (accountsData.error) {
+    throw new Error(accountsData.error.message);
+  }
 
   const pages = accountsData.data || [];
+
   if (!pages.length) {
     throw new Error(
       "No Facebook Pages found. Link your Instagram Professional account to a Facebook Page first.",
@@ -91,6 +117,7 @@ export async function discoverInstagramBusinessAccount(
 
   for (const page of pages) {
     const igId = page.instagram_business_account?.id;
+
     if (igId && page.access_token) {
       return {
         page_id: page.id,
@@ -101,16 +128,22 @@ export async function discoverInstagramBusinessAccount(
     }
   }
 
-  // Fallback: fetch IG account from first page explicitly
+  // fallback fetch
   const first = pages[0];
+
   const pageRes = await fetch(
-    `${GRAPH}/${first.id}?fields=instagram_business_account&access_token=${encodeURIComponent(first.access_token || userAccessToken)}`,
+    `${GRAPH}/${first.id}?fields=instagram_business_account&access_token=${encodeURIComponent(
+      first.access_token || userAccessToken,
+    )}`,
   );
+
   const pageData = await pageRes.json();
+
   const igId = pageData.instagram_business_account?.id;
+
   if (!igId) {
     throw new Error(
-      "No Instagram Business account linked to your Facebook Page. Use a Professional IG account connected to a Page.",
+      "No Instagram Business account linked to your Facebook Page.",
     );
   }
 
@@ -127,16 +160,31 @@ export async function subscribePageWebhooks(
   pageAccessToken: string,
 ): Promise<{ success: boolean; error?: string }> {
   const res = await fetch(
-    `${GRAPH}/${pageId}/subscribed_apps?access_token=${encodeURIComponent(pageAccessToken)}`,
+    `${GRAPH}/${pageId}/subscribed_apps`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subscribed_fields: WEBHOOK_SUBSCRIBED_FIELDS.split(",") }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        subscribed_fields: WEBHOOK_SUBSCRIBED_FIELDS.split(","),
+        access_token: pageAccessToken,
+      }),
     },
   );
+
   const data = await res.json();
-  if (data.error) return { success: false, error: data.error.message };
-  return { success: data.success === true || !data.error };
+
+  if (data.error) {
+    return {
+      success: false,
+      error: data.error.message,
+    };
+  }
+
+  return {
+    success: data.success === true || !data.error,
+  };
 }
 
 export async function fetchIgProfile(
@@ -149,10 +197,18 @@ export async function fetchIgProfile(
   followers_count?: number;
 }> {
   const res = await fetch(
-    `${GRAPH}/${igBusinessId}?fields=username,name,profile_picture_url,followers_count&access_token=${encodeURIComponent(accessToken)}`,
+    `${GRAPH}/${igBusinessId}?fields=username,name,profile_picture_url,followers_count&access_token=${encodeURIComponent(
+      accessToken,
+    )}`,
   );
+
   const data = await res.json();
-  if (data.error) return {};
+
+  if (data.error) {
+    console.error("IG Profile Error:", data.error);
+    return {};
+  }
+
   return data;
 }
 
@@ -177,15 +233,43 @@ export async function completeMetaOAuthConnect(
   redirectUri: string,
   code: string,
 ): Promise<ConnectResult> {
-  const short = await exchangeCodeForToken(appId, appSecret, redirectUri, code);
-  const long = await exchangeLongLivedUserToken(appId, appSecret, short.access_token);
-  const userToken = long.access_token;
-  const expiresIn = long.expires_in || 5184000;
-  const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+  // Step 1 - Exchange code
+  const short = await exchangeCodeForToken(
+    appId,
+    appSecret,
+    redirectUri,
+    code,
+  );
 
+  // Step 2 - Long-lived token
+  const long = await exchangeLongLivedUserToken(
+    appId,
+    appSecret,
+    short.access_token,
+  );
+
+  const userToken = long.access_token;
+
+  const expiresIn = long.expires_in || 5184000;
+
+  const tokenExpiresAt = new Date(
+    Date.now() + expiresIn * 1000,
+  ).toISOString();
+
+  // Step 3 - Discover Page + IG
   const page = await discoverInstagramBusinessAccount(userToken);
-  const webhook = await subscribePageWebhooks(page.page_id, page.page_access_token);
-  const profile = await fetchIgProfile(page.instagram_business_account_id, page.page_access_token);
+
+  // Step 4 - Subscribe webhooks
+  const webhook = await subscribePageWebhooks(
+    page.page_id,
+    page.page_access_token,
+  );
+
+  // Step 5 - Fetch IG profile
+  const profile = await fetchIgProfile(
+    page.instagram_business_account_id,
+    page.page_access_token,
+  );
 
   return {
     instagram_user_id: page.instagram_business_account_id,

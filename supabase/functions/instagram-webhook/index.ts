@@ -3,6 +3,7 @@
  * Instagram DM → Meta Webhook → Store → AI Orchestrator → Moderation → Graph API Reply
  */
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendInstagramMessage } from "../_shared/instagram-api.ts";
 import {
@@ -19,7 +20,7 @@ import {
 } from "../_shared/ai-orchestrator.ts";
 import { moderateReply } from "../_shared/moderation.ts";
 
-const WEBHOOK_VERIFY_TOKEN = Deno.env.get("WEBHOOK_VERIFY_TOKEN") || "instaautomate_verify";
+const WEBHOOK_VERIFY_TOKEN = Deno.env.get("WEBHOOK_VERIFY_TOKEN") || "instaverify-token";
 const WEBHOOK_APP_SECRET = Deno.env.get("INSTAGRAM_APP_SECRET") || Deno.env.get("META_APP_SECRET") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -116,101 +117,109 @@ Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
 
 
+// META WEBHOOK VERIFICATION + EVENTS MUST FOLLOW THE EXACT CONTRACT
   if (req.method === "GET") {
     const mode = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
-    if (mode === "subscribe" && token === WEBHOOK_VERIFY_TOKEN) {
-      return new Response(challenge ?? "", { status: 200, headers: { "Content-Type": "text/plain" } });
-    }
-    return new Response("Forbidden", { status: 403 });
-  }
 
-  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
-
-  const raw = new Uint8Array(await req.arrayBuffer());
-  console.log("REQUEST BODY BYTES:", raw?.length);
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-  // HARD FAILSAFE: ensure any unexpected crash still logs.
-  // If you still see the earlier logs but not the RAW BODY / EVENT logs,
-  // the crash is likely occurring during signature verification or JSON.parse.
-  try {
-    // DEBUG ONLY: bypass signature verification to isolate EarlyDrop crash.
-    // const signatureOk = await verifyXHubSignature256(req, raw, WEBHOOK_APP_SECRET);
-    // if (!signatureOk) return new Response("Invalid signature", { status: 403 });
-
-
-    const bodyText = new TextDecoder().decode(raw);
-    const payload = JSON.parse(bodyText);
-
-    console.log("WEBHOOK VERIFY REQUEST:", req.url);
-    console.log("RAW WEBHOOK BODY:", bodyText.slice(0, 5000));
-    console.log("WEBHOOK EVENT (parsed):", {
-      object: payload?.object,
-      entryCount: payload?.entry?.length,
-      hasMessaging: !!payload?.entry?.[0]?.messaging,
-      hasChanges: !!payload?.entry?.[0]?.changes,
+    console.log("[WEBHOOK_VERIFY]", {
+      mode,
+      token,
+      challenge
     });
 
-    if (payload.object && payload.object !== "instagram") {
-      return new Response("OK", { status: 200 });
+if (
+  mode === "subscribe" &&
+  token === "instaverify-token"
+) {
+
+  return new Response(challenge as string, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/plain"
     }
+  });
 
+}
 
-    for (const entry of payload.entry || []) {
-      const igAccountId = entry.id;
+return new Response("Verification failed", {
+  status: 403
+});
 
-      for (const messaging of entry.messaging || []) {
-        const senderId = messaging.sender?.id;
-        const recipientId = messaging.recipient?.id;
-        const text = messaging.message?.text;
-
-        console.log("MESSAGING EVENT:", {
-          senderId,
-          recipientId,
-          hasText: !!text,
-          mid: messaging.message?.mid,
-          timestamp: messaging.timestamp,
-        });
-        console.log("SENDER:", senderId);
-        console.log("RECIPIENT:", recipientId);
-        console.log("MESSAGE TEXT:", text);
-
-        if (messaging.message?.is_echo) continue;
-        if (!messaging.message?.text) continue;
-
-        const eventId = messaging.message?.mid || `dm-${messaging.sender?.id}-${messaging.timestamp}`;
-
-        if (!(await markWebhookEvent(supabase, eventId, "dm", igAccountId, messaging))) continue;
-
-        try {
-          await processDM(supabase, igAccountId, messaging);
-          await completeWebhookEvent(supabase, eventId);
-        } catch (e) {
-          await completeWebhookEvent(supabase, eventId, String(e));
-        }
-      }
-
-      for (const change of entry.changes || []) {
-        if (change.field !== "comments") continue;
-        const comment = change.value;
-        const eventId = comment?.id || `comment-${Date.now()}`;
-        if (!(await markWebhookEvent(supabase, eventId, "comment", igAccountId, comment))) continue;
-        try {
-          await processComment(supabase, igAccountId, comment);
-          await completeWebhookEvent(supabase, eventId);
-        } catch (e) {
-          await completeWebhookEvent(supabase, eventId, String(e));
-        }
-      }
-    }
-
-    return new Response("OK", { status: 200 });
-  } catch (err) {
-    console.error("Webhook error:", err);
-    return new Response("OK", { status: 200 });
   }
+
+  // WEBHOOK EVENTS
+  if (req.method === "POST") {
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    try {
+      const body = await req.json();
+
+      console.log("[WEBHOOK_EVENT]", body);
+
+      // Preserve existing POST handling, but always respond with the required Meta contract.
+      // If event processing fails, Meta still gets EVENT_RECEIVED.
+      (async () => {
+        try {
+          const payload = body;
+          if (payload?.object && payload.object !== "instagram") return;
+
+          for (const entry of payload.entry || []) {
+            const igAccountId = entry.id;
+
+            for (const messaging of entry.messaging || []) {
+              const senderId = messaging.sender?.id;
+              const text = messaging.message?.text;
+
+              if (messaging.message?.is_echo) continue;
+              if (!messaging.message?.text) continue;
+
+              const eventId = messaging.message?.mid || `dm-${messaging.sender?.id}-${messaging.timestamp}`;
+              if (!(await markWebhookEvent(supabase, eventId, "dm", igAccountId, messaging))) continue;
+
+              try {
+                await processDM(supabase, igAccountId, messaging);
+                await completeWebhookEvent(supabase, eventId);
+              } catch (e) {
+                await completeWebhookEvent(supabase, eventId, String(e));
+              }
+            }
+
+            for (const change of entry.changes || []) {
+              if (change.field !== "comments") continue;
+              const comment = change.value;
+              const eventId = comment?.id || `comment-${Date.now()}`;
+              if (!(await markWebhookEvent(supabase, eventId, "comment", igAccountId, comment))) continue;
+              try {
+                await processComment(supabase, igAccountId, comment);
+                await completeWebhookEvent(supabase, eventId);
+              } catch (e) {
+                await completeWebhookEvent(supabase, eventId, String(e));
+              }
+            }
+          }
+        } catch (e) {
+          console.error("POST processing error:", e);
+        }
+      })();
+
+      return new Response("EVENT_RECEIVED", {
+        status: 200
+      });
+    } catch (e) {
+      console.error("POST webhook parse error:", e);
+      return new Response("EVENT_RECEIVED", {
+        status: 200
+      });
+    }
+
+  }
+
+  return new Response("Method not allowed", {
+    status: 405
+  });
 });
 
 async function processDM(supabase: any, igAccountId: string, messaging: any) {

@@ -7,19 +7,26 @@ const GRAPH = "https://graph.facebook.com/v23.0";
 const FACEBOOK_OAUTH = "https://www.facebook.com/v23.0/dialog/oauth";
 
 export const META_OAUTH_SCOPES = [
-  "pages_show_list",
-  "pages_read_engagement",
+  // Use the standard Meta/Instagram permission names.
+  // instagram_business_* permissions can appear invalid depending on app type / Graph API version.
   "instagram_basic",
   "instagram_manage_messages",
   "instagram_manage_comments",
+  "instagram_content_publish",
+
+  "pages_show_list",
+  "pages_read_engagement",
 ].join(",");
 
+// IMPORTANT: messaging fields require pages_messaging permission.
+// For development + basic webhook stabilization, we subscribe only to fields
+// that don't require advanced messaging scopes.
 export const WEBHOOK_SUBSCRIBED_FIELDS = [
-  "messages",
-  "messaging_postbacks",
-  "message_echoes",
-  "message_reads",
+  "comments",
+  "mentions",
+  "feed",
 ].join(",");
+
 
 export function buildFacebookOAuthUrl(
   appId: string,

@@ -64,10 +64,27 @@ Deno.serve(async (req: Request) => {
 
       const result = await completeMetaOAuthConnect(appId, appSecret, redirectUri, body.code);
 
-      // Optional: persist if user_id passed (service role)
-      const userId = body.user_id;
+      // Optional: persist if we can determine user_id (service role)
+      // Prefer explicit body.user_id; otherwise infer from the JWT in Authorization header.
+      const authHeader = req.headers.get("authorization") || "";
+      const token = authHeader.toLowerCase().startsWith("bearer ")
+        ? authHeader.slice("bearer ".length)
+        : "";
+
+      let userId = body.user_id;
+      if (!userId && SERVICE_KEY && token) {
+        try {
+          const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+          const { data, error } = await supabase.auth.getUser(token);
+          if (!error && data?.user?.id) userId = data.user.id;
+        } catch (e) {
+          console.warn("instagram-oauth: failed to infer user from JWT", e);
+        }
+      }
+
       if (userId && SERVICE_KEY) {
         const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
         const row = {
           user_id: userId,
           instagram_user_id: result.instagram_user_id,

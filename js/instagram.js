@@ -100,9 +100,9 @@ const instagram = {
       instagram_user_id: igId,
       username,
       access_token: token,
-      page_id: profile?.page_id || igId,
       page_access_token: profile?.page_access_token || token,
       page_name: profile?.page_name || null,
+
       token_expires_at: profile?.token_expires_at || null,
       webhook_subscribed: profile?.webhook_subscribed ?? false,
       connection_method: profile?.connection_method || 'manual',
@@ -165,7 +165,11 @@ const instagram = {
       connected: true,
       updated_at: new Date().toISOString()
     };
-    await supabase.from('instagram_config').upsert(configRow, { onConflict: 'id' }).then(() => {}).catch(() => {});
+    // Best-effort mirror; ignore errors.
+    try {
+      await supabase.from('instagram_config').upsert(configRow, { onConflict: 'id' });
+    } catch (_) {}
+
 
     return this.normalizeAccount(saved);
   },
@@ -243,13 +247,17 @@ const instagram = {
         const { type, account, error } = event.data || {};
         if (type === 'IG_CONNECTED') {
           window.removeEventListener('message', onMessage);
+
           try {
+            // Popup success UX (immediate)
+            showToast(`Connected @${account?.instagram_user_id || account?.username || ''}`);
             const saved = await this.saveToDatabase({
               appId: META_APP_ID,
               accessToken: account.access_token,
               instagramUserId: account.instagram_user_id,
               profile: account
             });
+
 
             // Connected-state UX: refresh account + attempt auto-sync where supported
             try { await this.syncAccount(); } catch (_) {}
@@ -260,7 +268,10 @@ const instagram = {
             // Refresh connected UI immediately
             try { window.location.reload(); } catch (_) {}
 
-            resolve({ success: true, data: saved });
+resolve({ success: true, data: saved });
+            // ensure connected banner shows on reload
+            setTimeout(() => { try { window.location.reload(); } catch (_) {} }, 200);
+
           } catch (e) {
             reject(e);
           }
@@ -456,7 +467,9 @@ async function loadConnectedAccounts() {
       <div class="connected-banner">
         <img src="${a.profile_picture_url || ''}" alt="" class="account-avatar" onerror="this.remove()">
         <div>
-          <strong>@${a.username}</strong>
+          <strong>${a.username ? `@${a.username}` : '@instagram'}</strong>
+          ${a.page_name ? `<div style="color:var(--text-secondary);font-size:12px;margin-top:4px">${a.page_name}</div>` : ''}
+
           <span class="badge badge-success">Connected</span>
           ${wh}
           <div class="account-stats">IG: ${a.instagram_account_id} · Page: ${a.page_name || a.page_id || '—'}</div>
@@ -466,6 +479,14 @@ async function loadConnectedAccounts() {
         <button class="btn btn-danger" style="margin-top:10px;width:100%" onclick="confirmDeleteAccount(${JSON.stringify(a.id)})">Delete Account</button>
       </div>`;
     document.getElementById('webhookGuide')?.classList.remove('hidden');
+    // Show automation CTA on successful connect
+    const cta = document.getElementById('automationCta');
+    if (cta) cta.classList.remove('hidden');
+    const btn = document.getElementById('startAutomationBtn');
+    if (btn) {
+      btn.onclick = () => { window.location.href = 'dashboard.html?automate=true'; };
+    }
+
   } else {
     container.innerHTML = `<div class="alert alert-info">Not connected yet. Use <strong>Manual Entry</strong> tab below.</div>`;
     document.getElementById('webhookGuide')?.classList.add('hidden');

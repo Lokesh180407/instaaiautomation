@@ -1,3 +1,4 @@
 {
-  "verifyJWT": false
+  "verify_jwt": false
 }
+

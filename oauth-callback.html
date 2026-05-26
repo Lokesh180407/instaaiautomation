@@ -122,16 +122,20 @@
           } else {
             await supabase.from('instagram_accounts').insert(accountRow);
           }
-          await supabase.from('instagram_config').upsert({
-            id: APP_CONFIG.configRowId,
-            instagram_account_id: data.instagram_user_id,
-            meta_app_id: APP_CONFIG.defaultAppId,
-            long_lived_token: data.access_token,
-            page_id: data.page_id,
-            page_access_token: data.page_access_token,
-            username: data.username,
-            connected: true
-          }, { onConflict: 'id' }).catch(() => {});
+          // Best-effort mirror; ignore errors.
+          try {
+            await supabase.from('instagram_config').upsert({
+              id: APP_CONFIG.configRowId,
+              instagram_account_id: data.instagram_user_id,
+              meta_app_id: APP_CONFIG.defaultAppId,
+              long_lived_token: data.access_token,
+              page_id: data.page_id,
+              page_access_token: data.page_access_token,
+              username: data.username,
+              connected: true
+            }, { onConflict: 'id' });
+          } catch (_) {}
+
         }
 
         status.textContent = data.webhook_subscribed

@@ -33,11 +33,12 @@ const APP_CONFIG = {
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzdXF2eGZncmFwaGdjbnlieGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTM1NjEsImV4cCI6MjA5NDc2OTU2MX0.90N1IDt5QUffn2BVixbpCot-fsuvEHsPpusa-ecACOo',
   defaultAppId: '1503208814932037',
   
-  // OAuth redirect - single canonical production value to satisfy Meta allow-list
-  // (Hardcoded temporarily to remove redirect_uri mismatch blocking.)
+  // OAuth redirect (must exactly match Meta "Valid OAuth Redirect URIs")
   get redirectUri() {
-    return `https://instaaiautomation-33hfnko35.vercel.app/oauth-callback.html`;
+    return `https://instaaiautomation.vercel.app/oauth-callback.html`;
   },
+
+
   
   // Meta Facebook Login scopes (one-click connect — page + IG + webhooks)
   metaOAuthScopes: [

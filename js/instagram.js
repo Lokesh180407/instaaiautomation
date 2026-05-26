@@ -2,7 +2,9 @@
 const CONFIG_ROW_ID = typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.configRowId : '00000000-0000-0000-0000-000000000001';
 const META_APP_ID = typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.defaultAppId : '1503208814932037';
 const GRAPH = `https://graph.facebook.com/${typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.graphVersion : 'v23.0'}`;
-const REDIRECT_URI = typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.redirectUri : `${window.location.origin}/oauth-callback.html`;
+// HARD-CODED to avoid Vercel preview random domains breaking Meta OAuth strict allow-list
+const REDIRECT_URI = "https://instaaiautomation.vercel.app/oauth-callback.html";
+
 
 const instagram = {
   async graphRequest(path, token, fields) {
